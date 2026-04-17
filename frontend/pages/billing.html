@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>💰 Billing</h1>
+      <p>Generate bills, record payments and track invoices</p>
+    </div>
+    <div class="page-header-actions">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search invoices...">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('genBillModal')">+ Generate Bill</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">₹1.2L</div><div class="stat-label">Today's Revenue</div></div>
+    <div class="stat-card blue"><div class="stat-icon">📄</div><div class="stat-value">42</div><div class="stat-label">Invoices Today</div></div>
+    <div class="stat-card orange"><div class="stat-icon">⏳</div><div class="stat-value">₹28K</div><div class="stat-label">Pending Dues</div></div>
+    <div class="stat-card purple"><div class="stat-icon">📊</div><div class="stat-value">₹8.4L</div><div class="stat-label">Monthly Revenue</div></div>
+  </div>
+
+  <!-- Bills Table -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Invoice History</div>
+      <div style="display:flex;gap:8px">
+        <select class="filter-select">
+          <option>All Status</option>
+          <option>Paid</option><option>Pending</option><option>Partial</option>
+        </select>
+        <select class="filter-select">
+          <option>All Payment</option>
+          <option>Cash</option><option>UPI</option>
+          <option>Card</option><option>Insurance</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Invoice</th><th>Patient</th><th>Date</th><th>Items</th><th>Total</th><th>Paid</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="billTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Generate Bill Modal -->
+<div class="modal-overlay" id="genBillModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">+ Generate Bill</span>
+      <button class="modal-close" onclick="closeModal('genBillModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Patient</label>
+          <select class="form-control" id="billPatient">
+            <option value="">Select Patient</option>
+            <option>P001 – Ramesh Kumar</option>
+            <option>P002 – Priya Nair</option>
+            <option>P003 – Suresh Reddy</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admission / Visit Ref</label>
+          <input type="text" class="form-control" placeholder="Admission ID (optional)">
+        </div>
+      </div>
+      <div style="font-weight:600;font-size:14px;color:var(--dark);margin-bottom:12px">Bill Items</div>
+      <div id="billItems">
+        <div class="form-row" style="margin-bottom:8px">
+          <input type="text" class="form-control" placeholder="Description" value="Consultation Fee">
+          <input type="number" class="form-control" placeholder="Amount" value="500">
+          <select class="form-control"><option>Consultation</option><option>Medicine</option><option>Lab</option><option>Room</option><option>Procedure</option></select>
+        </div>
+        <div class="form-row" style="margin-bottom:8px">
+          <input type="text" class="form-control" placeholder="Description" value="Room Charges (3 days)">
+          <input type="number" class="form-control" placeholder="Amount" value="4500">
+          <select class="form-control"><option>Room</option></select>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="addBillItem()" style="margin-bottom:16px">+ Add Item</button>
+      <div style="border-top:2px solid var(--grey-100);padding-top:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+          <span style="color:var(--grey-400)">Subtotal</span><strong id="billSubtotal">₹5,000</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+          <span style="color:var(--grey-400)">GST (5%)</span><strong>₹250</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:var(--dark)">
+          <span>Total</span><span>₹5,250</span>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:16px">
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <select class="form-control" id="payMethod">
+            <option>Cash</option><option>UPI</option>
+            <option>Card</option><option>Insurance</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount Paid (₹)</label>
+          <input type="number" class="form-control" id="amtPaid" placeholder="Amount received">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('genBillModal')">Cancel</button>
+      <button class="btn btn-outline" onclick="previewBill()">👁 Preview</button>
+      <button class="btn btn-primary" onclick="generateBill()">Generate & Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  injectLayout('billing');
+
+  const bills = [
+    { id:'INV-0042', patient:'Ramesh Kumar', date:'15 Jan 2024', items:4, total:'₹12,500', paid:'₹12,500', status:'Paid',    method:'UPI'  },
+    { id:'INV-0041', patient:'Priya Nair',   date:'15 Jan 2024', items:2, total:'₹3,200',  paid:'₹1,500',  status:'Partial', method:'Cash' },
+    { id:'INV-0040', patient:'Suresh Reddy', date:'14 Jan 2024', items:5, total:'₹28,000', paid:'₹0',      status:'Pending', method:'—'   },
+    { id:'INV-0039', patient:'Kavitha Devi', date:'14 Jan 2024', items:3, total:'₹6,800',  paid:'₹6,800',  status:'Paid',    method:'Card' },
+    { id:'INV-0038', patient:'Mohan Singh',  date:'13 Jan 2024', items:7, total:'₹45,000', paid:'₹45,000', status:'Paid',    method:'Insurance' },
+  ];
+
+  const sc = { Paid:'green', Partial:'orange', Pending:'red' };
+
+  document.getElementById('billTbody').innerHTML = bills.map(b => `
+    <tr>
+      <td><div class="id-chip">${b.id}</div></td>
+      <td style="font-weight:600;color:var(--dark)">${b.patient}</td>
+      <td style="font-size:13px;color:var(--grey-400)">${b.date}</td>
+      <td style="text-align:center">${b.items}</td>
+      <td style="font-weight:700">${b.total}</td>
+      <td style="color:var(--success);font-weight:600">${b.paid}</td>
+      <td><span class="badge badge-${sc[b.status]}">${b.status}</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="viewBill('${b.id}')">View</button>
+          <button class="btn btn-outline btn-sm">🖨️</button>
+          ${b.status!=='Paid'?`<button class="btn btn-sm" style="background:var(--success-light);color:var(--success)" onclick="recordPayment('${b.id}')">Pay</button>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+
+  function addBillItem() {
+    document.getElementById('billItems').insertAdjacentHTML('beforeend',`
+      <div class="form-row" style="margin-bottom:8px">
+        <input type="text" class="form-control" placeholder="Description">
+        <input type="number" class="form-control" placeholder="Amount">
+        <select class="form-control"><option>Consultation</option><option>Medicine</option><option>Lab</option><option>Room</option></select>
+      </div>`);
+  }
+
+  function generateBill() {
+    closeModal('genBillModal');
+    showToast('✅ Invoice INV-0043 generated. WhatsApp receipt sent.','success');
+  }
+
+  function previewBill() { showToast('Bill preview – connect to PDF generator', 'info'); }
+  function viewBill(id)  { showToast(`Viewing bill ${id}`, 'info'); }
+  function recordPayment(id) {
+    const amt = prompt(`Enter payment amount for ${id} (₹):`);
+    if (amt) showToast(`✅ Payment ₹${amt} recorded for ${id}`, 'success');
+  }
+</script>
+</body>
+</html>

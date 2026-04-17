@@ -1,15 +1,18 @@
 {
-  "name": "backend",
+  "name": "arogyaseva-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "ArogyaSeva HMS - Node.js Backend",
+  "main": "src/server.js",
   "type": "commonjs",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "db:migrate": "npx prisma migrate dev",
+    "db:generate": "npx prisma generate",
+    "db:studio": "npx prisma studio",
+    "db:seed": "node database/seed.js",
+    "db:reset": "npx prisma migrate reset"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
     "@prisma/client": "^6.19.3",

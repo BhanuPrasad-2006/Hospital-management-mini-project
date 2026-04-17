@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointments – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Appointments</h1>
+      <p>Schedule and manage patient appointments</p>
+    </div>
+    <div class="page-header-actions">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="apptSearch" placeholder="Search appointments...">
+      </div>
+      <select class="filter-select" id="apptStatus">
+        <option value="">All Status</option>
+        <option>Confirmed</option><option>Waiting</option>
+        <option>Completed</option><option>Cancelled</option>
+      </select>
+      <button class="btn btn-primary" onclick="openModal('addApptModal')">+ Book Appointment</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+    <div class="stat-card blue"><div class="stat-icon">📅</div><div class="stat-value">18</div><div class="stat-label">Today's Total</div></div>
+    <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value">11</div><div class="stat-label">Confirmed</div></div>
+    <div class="stat-card orange"><div class="stat-icon">⏳</div><div class="stat-value">4</div><div class="stat-label">Waiting</div></div>
+    <div class="stat-card red"><div class="stat-icon">❌</div><div class="stat-value">3</div><div class="stat-label">No Shows</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs tab-wrap">
+    <button class="tab-btn active" data-tab="tabList" onclick="switchApptTab(this,'tabList')">📋 List View</button>
+    <button class="tab-btn" data-tab="tabCalendar" onclick="switchApptTab(this,'tabCalendar')">📆 Calendar</button>
+  </div>
+
+  <!-- List View -->
+  <div id="tabList" class="card">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Token</th><th>Patient</th><th>Doctor</th>
+            <th>Date & Time</th><th>Type</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="apptTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Calendar View -->
+  <div id="tabCalendar" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <button class="btn btn-icon" id="prevMonth">◀</button>
+        <div class="card-title" id="calendarMonth">January 2024</div>
+        <button class="btn btn-icon" id="nextMonth">▶</button>
+      </div>
+      <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Book Appointment Modal -->
+<div class="modal-overlay" id="addApptModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">📅 Book Appointment</span>
+      <button class="modal-close" onclick="closeModal('addApptModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Patient <span>*</span></label>
+          <select class="form-control" id="apptPatient">
+            <option value="">Select Patient</option>
+            <option>P001 – Ramesh Kumar</option>
+            <option>P002 – Priya Nair</option>
+            <option>P003 – Suresh Reddy</option>
+            <option>P004 – Kavitha Devi</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Doctor <span>*</span></label>
+          <select class="form-control" id="apptDoctor">
+            <option value="">Select Doctor</option>
+            <option>Dr. Anil Sharma – Cardiology</option>
+            <option>Dr. Sunita Mehta – Neurology</option>
+            <option>Dr. Rajesh Patel – Orthopedic</option>
+            <option>Dr. Meena Iyer – Pediatrics</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date <span>*</span></label>
+          <input type="date" class="form-control" id="apptDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Time <span>*</span></label>
+          <select class="form-control" id="apptTime">
+            <option>09:00 AM</option><option>09:30 AM</option>
+            <option>10:00 AM</option><option>10:30 AM</option>
+            <option>11:00 AM</option><option>11:30 AM</option>
+            <option>12:00 PM</option><option>02:00 PM</option>
+            <option>02:30 PM</option><option>03:00 PM</option>
+            <option>03:30 PM</option><option>04:00 PM</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Visit Type</label>
+          <select class="form-control" id="apptType">
+            <option>OPD</option><option>Follow-up</option>
+            <option>Emergency</option><option>Telemedicine</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Send Reminder</label>
+          <select class="form-control">
+            <option>WhatsApp + SMS</option>
+            <option>WhatsApp only</option>
+            <option>SMS only</option>
+            <option>No reminder</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason / Chief Complaint</label>
+        <textarea class="form-control" id="apptReason" rows="2" placeholder="Why is the patient visiting?"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addApptModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="bookAppointment()">Book Appointment</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  injectLayout('appointments');
+
+  const appts = [
+    { token:'T001', patient:'Ramesh Kumar', doctor:'Dr. Sharma', datetime:'Today 09:00 AM', type:'OPD',       status:'Confirmed' },
+    { token:'T002', patient:'Priya Nair',   doctor:'Dr. Mehta',  datetime:'Today 10:30 AM', type:'Follow-up', status:'Waiting'   },
+    { token:'T003', patient:'Suresh Reddy', doctor:'Dr. Patel',  datetime:'Today 11:00 AM', type:'OPD',       status:'Completed' },
+    { token:'T004', patient:'Kavitha Devi', doctor:'Dr. Iyer',   datetime:'Today 02:00 PM', type:'OPD',       status:'Confirmed' },
+    { token:'T005', patient:'Mohan Singh',  doctor:'Dr. Sharma', datetime:'Today 03:00 PM', type:'Emergency', status:'Cancelled' },
+  ];
+
+  const sc = { Confirmed:'green', Waiting:'orange', Completed:'blue', Cancelled:'red' };
+
+  document.getElementById('apptTbody').innerHTML = appts.map(a => `
+    <tr>
+      <td><div class="id-chip">${a.token}</div></td>
+      <td style="font-weight:600;color:var(--dark)">${a.patient}</td>
+      <td class="text-sm text-muted">${a.doctor}</td>
+      <td style="font-family:var(--font-mono);font-size:12px">${a.datetime}</td>
+      <td><span class="badge badge-grey">${a.type}</span></td>
+      <td><span class="badge badge-${sc[a.status]}">${a.status}</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm">View</button>
+          ${a.status==='Confirmed'||a.status==='Waiting'?
+            `<button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger)"
+              onclick="cancelAppt('${a.token}')">Cancel</button>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+
+  // Calendar
+  function renderCalendar(year, month) {
+    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('calendarMonth').textContent = `${names[month]} ${year}`;
+    const grid = document.getElementById('calendarGrid');
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    let html = days.map(d => `<div style="padding:8px;font-size:11px;font-weight:700;color:var(--grey-400);text-transform:uppercase">${d}</div>`).join('');
+    for (let i = 0; i < firstDay; i++) html += '<div></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const isToday = d === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+      const hasAppt = [3,7,12,15,18,22].includes(d);
+      html += `<div style="padding:8px;border-radius:8px;cursor:pointer;font-size:13px;
+        background:${isToday?'var(--primary)':'transparent'};
+        color:${isToday?'white':'var(--grey-600)'};
+        font-weight:${isToday?'700':'400'};
+        position:relative" onclick="showToast('Appointments for ${d} ${names[month]}','info')">
+        ${d}
+        ${hasAppt?`<div style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+          width:5px;height:5px;border-radius:50%;background:${isToday?'white':'var(--primary)'}"></div>`:''}
+      </div>`;
+    }
+    grid.innerHTML = html;
+  }
+
+  let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+  renderCalendar(calYear, calMonth);
+  document.getElementById('prevMonth').onclick = () => { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(calYear,calMonth); };
+  document.getElementById('nextMonth').onclick = () => { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(calYear,calMonth); };
+
+  function switchApptTab(btn, tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tabList').style.display     = tabId==='tabList'     ? 'block' : 'none';
+    document.getElementById('tabCalendar').style.display = tabId==='tabCalendar' ? 'block' : 'none';
+  }
+
+  function bookAppointment() {
+    const patient = document.getElementById('apptPatient').value;
+    const doctor  = document.getElementById('apptDoctor').value;
+    const date    = document.getElementById('apptDate').value;
+    if (!patient || !doctor || !date) { showToast('Please fill all required fields', 'warning'); return; }
+    closeModal('addApptModal');
+    showToast('✅ Appointment booked! Reminder sent via WhatsApp.', 'success');
+  }
+
+  function cancelAppt(token) {
+    confirmAction(`Cancel appointment ${token}?`, () => showToast(`Appointment ${token} cancelled`, 'success'));
+  }
+
+  // Set min date for appointment
+  document.getElementById('apptDate').min = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>

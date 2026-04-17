@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .security-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+    .threat-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px; border-radius: var(--radius-sm);
+      margin-bottom: 8px; border: 1px solid var(--grey-100);
+      background: var(--white); transition: var(--transition);
+    }
+    .threat-item:hover { box-shadow: var(--shadow); }
+    .threat-icon { font-size: 22px; }
+    .threat-badge {
+      width: 60px; text-align: center;
+      font-family: var(--font-mono); font-size: 11px;
+      font-weight: 700; padding: 3px 6px;
+      border-radius: 4px;
+    }
+    .risk-high   { background:#FFF5F5;color:#C53030; }
+    .risk-medium { background:#FFFAF0;color:#C05621; }
+    .risk-low    { background:#F0FFF4;color:#276749; }
+    .log-row { font-family: var(--font-mono); font-size: 11px; }
+    .hash-chip {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--grey-300); background: var(--grey-50);
+      padding: 2px 6px; border-radius: 4px;
+      max-width: 120px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>🔐 Security Dashboard</h1>
+      <p>Real-time threat monitoring, audit logs and access control</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-ghost btn-sm" onclick="exportLogs()">📥 Export Logs</button>
+      <button class="btn btn-danger btn-sm" onclick="openModal('blockIPModal')">🚫 Block IP</button>
+    </div>
+  </div>
+
+  <!-- Security Stats -->
+  <div class="stats-grid" style="grid-template-columns:repeat(6,1fr);margin-bottom:24px">
+    <div class="stat-card green"><div class="stat-icon">🟢</div><div class="stat-value">OK</div><div class="stat-label">System Status</div></div>
+    <div class="stat-card red"><div class="stat-icon">🚨</div><div class="stat-value">2</div><div class="stat-label">Active Threats</div></div>
+    <div class="stat-card orange"><div class="stat-icon">🛡️</div><div class="stat-value">23</div><div class="stat-label">Blocked Today</div></div>
+    <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value">47</div><div class="stat-label">Active Sessions</div></div>
+    <div class="stat-card purple"><div class="stat-icon">📋</div><div class="stat-value">1,284</div><div class="stat-label">Audit Entries</div></div>
+    <div class="stat-card teal"><div class="stat-icon">💾</div><div class="stat-value">2h ago</div><div class="stat-label">Last Backup</div></div>
+  </div>
+
+  <div class="security-grid">
+    <div>
+
+      <!-- Threat Alerts -->
+      <div class="card mb-3" style="margin-bottom:24px">
+        <div class="card-header">
+          <div class="card-title">🚨 Threat Alerts</div>
+          <span class="badge badge-red">2 Critical</span>
+        </div>
+        <div id="threatList">
+          <div class="threat-item">
+            <div class="threat-icon">🔓</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:14px;color:var(--dark)">Brute Force Attempt Blocked</div>
+              <div class="text-xs text-muted">IP: 45.132.67.89 attempted 24 logins in 2 minutes</div>
+              <div class="text-xs text-muted">📅 Today 09:14 AM</div>
+            </div>
+            <span class="threat-badge risk-high">HIGH</span>
+            <button class="btn btn-danger btn-sm">Block IP</button>
+          </div>
+          <div class="threat-item">
+            <div class="threat-icon">🕵️</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:14px;color:var(--dark)">Behavioural Anomaly Detected</div>
+              <div class="text-xs text-muted">Dr. Sharma account accessed 180 patient records in 3 minutes</div>
+              <div class="text-xs text-muted">📅 Today 11:32 AM</div>
+            </div>
+            <span class="threat-badge risk-high">HIGH</span>
+            <button class="btn btn-danger btn-sm">Revoke</button>
+          </div>
+          <div class="threat-item">
+            <div class="threat-icon">🌍</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:14px;color:var(--dark)">Geo Anomaly – Unusual Login Location</div>
+              <div class="text-xs text-muted">Admin account login from Russia (IP: 91.234.xx.xx) – blocked</div>
+              <div class="text-xs text-muted">📅 Yesterday 11:02 PM</div>
+            </div>
+            <span class="threat-badge risk-medium">MED</span>
+            <button class="btn btn-ghost btn-sm">Dismiss</button>
+          </div>
+          <div class="threat-item">
+            <div class="threat-icon">🍯</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:14px;color:var(--dark)">Honeypot Record Accessed</div>
+              <div class="text-xs text-muted">Fake patient record "Test Patient Alpha" accessed from internal IP</div>
+              <div class="text-xs text-muted">📅 Today 02:18 PM</div>
+            </div>
+            <span class="threat-badge risk-medium">MED</span>
+            <button class="btn btn-ghost btn-sm">Investigate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit Logs -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Audit Log</div>
+          <div style="display:flex;gap:8px">
+            <select class="filter-select" id="logModule">
+              <option>All Modules</option>
+              <option>Patient</option><option>Billing</option>
+              <option>Pharmacy</option><option>Auth</option><option>Emergency</option>
+            </select>
+            <select class="filter-select">
+              <option>All Actions</option>
+              <option>VIEW</option><option>CREATE</option>
+              <option>UPDATE</option><option>DELETE</option><option>LOGIN</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Module</th><th>Record</th><th>IP</th><th>Risk</th><th>Log Hash</th></tr>
+            </thead>
+            <tbody id="auditTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Side Panel -->
+    <div>
+
+      <!-- System Health -->
+      <div class="card mb-3" style="margin-bottom:24px">
+        <div class="card-title mb-3">💻 System Health</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:600">CPU Usage</span>
+              <span style="font-size:13px;color:var(--success)">34%</span>
+            </div>
+            <div class="progress-bar-wrap"><div class="progress-bar green" style="width:34%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:600">Memory</span>
+              <span style="font-size:13px;color:var(--warning)">68%</span>
+            </div>
+            <div class="progress-bar-wrap"><div class="progress-bar orange" style="width:68%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:600">DB Storage</span>
+              <span style="font-size:13px;color:var(--success)">22%</span>
+            </div>
+            <div class="progress-bar-wrap"><div class="progress-bar blue" style="width:22%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:600">Network I/O</span>
+              <span style="font-size:13px;color:var(--success)">12%</span>
+            </div>
+            <div class="progress-bar-wrap"><div class="progress-bar green" style="width:12%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Sessions -->
+      <div class="card mb-3" style="margin-bottom:24px">
+        <div class="card-header">
+          <div class="card-title">👥 Active Sessions</div>
+          <span class="badge badge-blue">47 Online</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--grey-50);border-radius:8px">
+            <span class="status-dot online"></span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:var(--dark)">Dr. Anil Sharma</div>
+              <div class="text-xs text-muted">192.168.1.10 • 2h 14m</div>
+            </div>
+            <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);padding:4px 8px;font-size:11px">Revoke</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--grey-50);border-radius:8px">
+            <span class="status-dot online"></span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:var(--dark)">Nurse Lakshmi</div>
+              <div class="text-xs text-muted">192.168.1.22 • 45m</div>
+            </div>
+            <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);padding:4px 8px;font-size:11px">Revoke</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--grey-50);border-radius:8px">
+            <span class="status-dot away"></span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:var(--dark)">Pharmacist Ravi</div>
+              <div class="text-xs text-muted">192.168.1.35 • 8m</div>
+            </div>
+            <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);padding:4px 8px;font-size:11px">Revoke</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Backup Status -->
+      <div class="card">
+        <div class="card-title mb-3">💾 Backup Status</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--success-light);border-radius:8px">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--success)">✅ Last Backup</div>
+              <div class="text-xs text-muted">2 hours ago • AWS S3</div>
+            </div>
+            <span class="badge badge-green">Success</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--grey-50);border-radius:8px">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--dark)">Next Backup</div>
+              <div class="text-xs text-muted">In 4 hours • Encrypted</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="triggerBackup()">Run Now</button>
+          </div>
+          <div style="font-size:12px;color:var(--grey-400);background:var(--grey-50);padding:10px;border-radius:8px">
+            📊 30-day retention • AES-256 encrypted<br>
+            🔗 Blockchain hash verified • 3-2-1 rule applied
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Block IP Modal -->
+<div class="modal-overlay" id="blockIPModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title">🚫 Block IP Address</span>
+      <button class="modal-close" onclick="closeModal('blockIPModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">IP Address</label>
+        <input type="text" class="form-control" id="blockIPInput" placeholder="e.g. 192.168.1.100">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason</label>
+        <select class="form-control">
+          <option>Brute Force Attack</option>
+          <option>Suspicious Activity</option>
+          <option>Unauthorized Access</option>
+          <option>Malware</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('blockIPModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="blockIP()">Block IP</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  injectLayout('security');
+
+  const auditLogs = [
+    { time:'09:14',  user:'Admin',       role:'admin',        action:'LOGIN',  module:'Auth',     record:'—',      ip:'192.168.1.1',  risk:0,  hash:'a3f8...e21c' },
+    { time:'09:22',  user:'Dr. Sharma',  role:'doctor',       action:'VIEW',   module:'Patient',  record:'P001',   ip:'192.168.1.10', risk:0,  hash:'b91d...4f7a' },
+    { time:'10:05',  user:'Dr. Sharma',  role:'doctor',       action:'CREATE', module:'Prescrip', record:'Rx-042', ip:'192.168.1.10', risk:0,  hash:'c47e...9b2f' },
+    { time:'10:48',  user:'Pharmacist',  role:'pharmacist',   action:'UPDATE', module:'Pharmacy', record:'M002',   ip:'192.168.1.35', risk:5,  hash:'d82a...1e6c' },
+    { time:'11:32',  user:'Dr. Sharma',  role:'doctor',       action:'VIEW',   module:'Patient',  record:'BULK',   ip:'192.168.1.10', risk:85, hash:'e19f...7d3b' },
+    { time:'11:55',  user:'Nurse Lax',   role:'nurse',        action:'UPDATE', module:'Vitals',   record:'P004',   ip:'192.168.1.22', risk:0,  hash:'f63c...2a8e' },
+    { time:'12:10',  user:'Unknown',     role:'—',            action:'LOGIN',  module:'Auth',     record:'FAIL',   ip:'45.132.67.89', risk:95, hash:'07b4...5d1f' },
+    { time:'14:18',  user:'Admin',       role:'admin',        action:'VIEW',   module:'Patient',  record:'HONEY',  ip:'192.168.1.1',  risk:70, hash:'18e5...6c90' },
+  ];
+
+  const ac = { LOGIN:'badge-blue', VIEW:'badge-grey', CREATE:'badge-green', UPDATE:'badge-orange', DELETE:'badge-red' };
+
+  document.getElementById('auditTbody').innerHTML = auditLogs.map(l => `
+    <tr>
+      <td class="log-row">${l.time}</td>
+      <td style="font-size:13px;font-weight:600;color:var(--dark)">${l.user}</td>
+      <td><span class="badge badge-grey" style="font-size:10px">${l.role}</span></td>
+      <td><span class="badge ${ac[l.action]||'badge-grey'}" style="font-size:10px">${l.action}</span></td>
+      <td class="text-sm text-muted">${l.module}</td>
+      <td class="log-row">${l.record}</td>
+      <td class="log-row text-muted">${l.ip}</td>
+      <td>
+        <span style="font-weight:700;font-size:12px;color:${l.risk>70?'var(--danger)':l.risk>30?'var(--orange)':'var(--success)'}">
+          ${l.risk}
+        </span>
+      </td>
+      <td><span class="hash-chip" title="${l.hash}">${l.hash}</span></td>
+    </tr>`).join('');
+
+  function triggerBackup() { showToast('🔄 Manual backup triggered. Will complete in ~2 minutes.','info'); }
+  function exportLogs() { showToast('📥 Audit logs exported to PDF','success'); }
+  function blockIP() {
+    const ip = document.getElementById('blockIPInput').value;
+    if (!ip) { showToast('Enter an IP address','warning'); return; }
+    closeModal('blockIPModal');
+    showToast(`🚫 IP ${ip} blocked successfully`,'success');
+  }
+
+  // Live risk score animation
+  setInterval(() => {
+    const rows = document.querySelectorAll('#auditTbody tr');
+    rows.forEach(row => {
+      const riskCell = row.cells[7];
+      if (riskCell) {
+        const risk = parseInt(riskCell.querySelector('span').textContent);
+        if (risk > 70) riskCell.style.animation = 'none';
+      }
+    });
+  }, 5000);
+</script>
+</body>
+</html>

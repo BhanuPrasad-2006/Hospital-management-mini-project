@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admissions – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>🛏️ Admissions</h1>
+      <p>Patient admission, bed assignment and discharge management</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-outline btn-sm" onclick="openModal('dischargeModal')">📤 Discharge Patient</button>
+      <button class="btn btn-primary" onclick="openModal('admitModal')">+ Admit Patient</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+    <div class="stat-card blue"><div class="stat-icon">🛏️</div><div class="stat-value">14</div><div class="stat-label">Admitted Today</div></div>
+    <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value">34</div><div class="stat-label">Available Beds</div></div>
+    <div class="stat-card orange"><div class="stat-icon">📤</div><div class="stat-value">6</div><div class="stat-label">Discharged Today</div></div>
+    <div class="stat-card red"><div class="stat-icon">🚨</div><div class="stat-value">3</div><div class="stat-label">ICU Patients</div></div>
+  </div>
+
+  <!-- Ward Tabs -->
+  <div class="tabs tab-wrap" style="margin-bottom:20px">
+    <button class="tab-btn active" onclick="filterWard('all',this)">All Wards</button>
+    <button class="tab-btn" onclick="filterWard('General',this)">General</button>
+    <button class="tab-btn" onclick="filterWard('ICU',this)">ICU</button>
+    <button class="tab-btn" onclick="filterWard('Private',this)">Private</button>
+    <button class="tab-btn" onclick="filterWard('Emergency',this)">Emergency</button>
+  </div>
+
+  <!-- Admissions Table -->
+  <div class="card">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Patient</th><th>Ward / Bed</th><th>Doctor</th><th>Admitted On</th><th>Days</th><th>Diagnosis</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="admissionTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Admit Modal -->
+<div class="modal-overlay" id="admitModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">+ Admit Patient</span>
+      <button class="modal-close" onclick="closeModal('admitModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Patient <span>*</span></label>
+          <select class="form-control">
+            <option value="">Select Patient</option>
+            <option>P001 – Ramesh Kumar</option>
+            <option>P002 – Priya Nair</option>
+            <option>P003 – Suresh Reddy</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admitting Doctor <span>*</span></label>
+          <select class="form-control">
+            <option>Dr. Anil Sharma</option>
+            <option>Dr. Sunita Mehta</option>
+            <option>Dr. Rajesh Patel</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ward Type</label>
+          <select class="form-control" id="wardType" onchange="updateBeds()">
+            <option>General</option><option>Private</option>
+            <option>ICU</option><option>Emergency</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bed Number</label>
+          <select class="form-control" id="bedSelect">
+            <option>G-101</option><option>G-102</option>
+            <option>G-103</option><option>G-104</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Admission Type</label>
+          <select class="form-control">
+            <option>Planned</option><option>Emergency</option><option>Transfer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admission Date <span>*</span></label>
+          <input type="date" class="form-control" id="admitDate">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Diagnosis / Reason <span>*</span></label>
+        <textarea class="form-control" rows="2" placeholder="Primary diagnosis or reason for admission"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('admitModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="admitPatient()">Admit & Assign Bed</button>
+    </div>
+  </div>
+</div>
+
+<!-- Discharge Modal -->
+<div class="modal-overlay" id="dischargeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">📤 Discharge Patient</span>
+      <button class="modal-close" onclick="closeModal('dischargeModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Patient</label>
+        <select class="form-control">
+          <option>ADM-001 – Ramesh Kumar (Bed G-101)</option>
+          <option>ADM-003 – Kavitha Devi (Bed G-104)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Discharge Date</label>
+        <input type="date" class="form-control" id="dischargeDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Discharge Summary</label>
+        <textarea class="form-control" rows="3" placeholder="Brief discharge notes and follow-up instructions"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Follow-up Date</label>
+        <input type="date" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('dischargeModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="dischargePatient()">Discharge & Free Bed</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  injectLayout('admission');
+
+  document.getElementById('admitDate').value    = new Date().toISOString().split('T')[0];
+  document.getElementById('dischargeDate').value = new Date().toISOString().split('T')[0];
+
+  const admissions = [
+    { id:'ADM-001', patient:'Ramesh Kumar', ward:'General', bed:'G-101', doctor:'Dr. Sharma', date:'2024-01-12', days:3, diagnosis:'Hypertension', status:'Stable' },
+    { id:'ADM-002', patient:'Mohan Singh',  ward:'ICU',     bed:'ICU-02',doctor:'Dr. Mehta',  date:'2024-01-14', days:1, diagnosis:'Cardiac Arrest','status':'Critical' },
+    { id:'ADM-003', patient:'Kavitha Devi', ward:'Private', bed:'P-201', doctor:'Dr. Sharma', date:'2024-01-15', days:0, diagnosis:'Post Surgery',   status:'Recovering' },
+    { id:'ADM-004', patient:'Arjun Rao',    ward:'General', bed:'G-105', doctor:'Dr. Patel',  date:'2024-01-13', days:2, diagnosis:'Fracture – Leg', status:'Stable' },
+  ];
+
+  const sc = { Stable:'green', Critical:'red', Recovering:'orange', Discharged:'grey' };
+
+  function renderAdmissions(data) {
+    document.getElementById('admissionTbody').innerHTML = data.map(a => `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar avatar-sm">${a.patient.charAt(0)}</div>
+            <div>
+              <div style="font-weight:600;color:var(--dark)">${a.patient}</div>
+              <div class="id-chip">${a.id}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div style="font-weight:600">${a.ward}</div>
+          <div class="text-xs text-muted">Bed: ${a.bed}</div>
+        </td>
+        <td class="text-sm text-muted">${a.doctor}</td>
+        <td style="font-size:13px">${a.date}</td>
+        <td style="font-weight:700;color:var(--primary)">${a.days}d</td>
+        <td class="text-sm text-muted">${a.diagnosis}</td>
+        <td><span class="badge badge-${sc[a.status]||'grey'}">${a.status}</span></td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm">View</button>
+            <button class="btn btn-outline btn-sm" onclick="openModal('dischargeModal')">Discharge</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function filterWard(ward, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderAdmissions(ward === 'all' ? admissions : admissions.filter(a => a.ward === ward));
+  }
+
+  function updateBeds() {
+    const ward  = document.getElementById('wardType').value;
+    const beds  = { General:['G-101','G-102','G-103'], Private:['P-201','P-202'], ICU:['ICU-01','ICU-02'], Emergency:['ER-01','ER-02'] };
+    const sel   = document.getElementById('bedSelect');
+    sel.innerHTML = (beds[ward]||[]).map(b => `<option>${b}</option>`).join('');
+  }
+
+  function admitPatient() { closeModal('admitModal'); showToast('✅ Patient admitted and bed assigned successfully!','success'); }
+  function dischargePatient() { closeModal('dischargeModal'); showToast('✅ Patient discharged. Bed freed. Bill auto-generated.','success'); }
+
+  renderAdmissions(admissions);
+</script>
+</body>
+</html>

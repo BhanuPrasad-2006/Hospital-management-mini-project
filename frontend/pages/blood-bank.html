@@ -1,0 +1,222 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blood Bank – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .blood-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+    .blood-unit-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .blood-unit-card.critical { border-color: var(--danger); background: var(--danger-light); }
+    .blood-unit-card.low { border-color: var(--warning); }
+    .blood-type { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--danger); margin-bottom: 4px; }
+    .blood-units { font-size: 32px; font-weight: 800; color: var(--dark); }
+    .blood-sublabel { font-size: 11px; color: var(--grey-400); text-transform: uppercase; letter-spacing: 0.5px; }
+  </style>
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>🩸 Blood Bank</h1>
+      <p>Manage blood inventory, donors and emergency requests</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-outline btn-sm" onclick="openModal('addDonorModal')">+ Register Donor</button>
+      <button class="btn btn-danger" onclick="openModal('bloodRequestModal')">🆘 Emergency Request</button>
+    </div>
+  </div>
+
+  <!-- Blood Inventory -->
+  <div class="card mb-3" style="margin-bottom:24px">
+    <div class="card-header">
+      <div class="card-title">Blood Inventory</div>
+      <span class="badge badge-red">O- critically low</span>
+    </div>
+    <div class="blood-grid">
+      <div class="blood-unit-card low"><div class="blood-type">A+</div><div class="blood-units">8</div><div class="blood-sublabel">Units Available</div></div>
+      <div class="blood-unit-card"><div class="blood-type">A-</div><div class="blood-units">3</div><div class="blood-sublabel">Units Available</div></div>
+      <div class="blood-unit-card"><div class="blood-type">B+</div><div class="blood-units">12</div><div class="blood-sublabel">Units Available</div></div>
+      <div class="blood-unit-card"><div class="blood-type">B-</div><div class="blood-units">5</div><div class="blood-sublabel">Units Available</div></div>
+      <div class="blood-unit-card"><div class="blood-type">O+</div><div class="blood-units">15</div><div class="blood-sublabel">Units Available</div></div>
+      <div class="blood-unit-card critical"><div class="blood-type">O-</div><div class="blood-units">2</div><div class="blood-sublabel">⚠️ Critical</div></div>
+      <div class="blood-unit-card"><div class="blood-type">AB+</div><div class="blood-units">6</div><div class="blood-sublabel">Units Available</div></div>
+      <div class="blood-unit-card"><div class="blood-type">AB-</div><div class="blood-units">4</div><div class="blood-sublabel">Units Available</div></div>
+    </div>
+  </div>
+
+  <!-- Donors Table -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Registered Donors</div>
+      <div style="display:flex;gap:8px">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search donors...">
+        </div>
+        <select class="filter-select">
+          <option>All Blood Groups</option>
+          <option>O-</option><option>O+</option>
+          <option>A+</option><option>B+</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Donor</th><th>Blood Group</th><th>Phone</th><th>Location</th><th>Last Donated</th><th>Eligible</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="donorTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Add Donor Modal -->
+<div class="modal-overlay" id="addDonorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">+ Register Blood Donor</span>
+      <button class="modal-close" onclick="closeModal('addDonorModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name <span>*</span></label>
+          <input type="text" class="form-control" placeholder="Donor name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Blood Group <span>*</span></label>
+          <select class="form-control">
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="tel" class="form-control" placeholder="Mobile number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">City / Location</label>
+          <input type="text" class="form-control" placeholder="City name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Donation Date</label>
+        <input type="date" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addDonorModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="registerDonor()">Register Donor</button>
+    </div>
+  </div>
+</div>
+
+<!-- Emergency Request Modal -->
+<div class="modal-overlay" id="bloodRequestModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🆘 Emergency Blood Request</span>
+      <button class="modal-close" onclick="closeModal('bloodRequestModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-danger">
+        ⚠️ This will immediately broadcast to all compatible nearby donors via WhatsApp and SMS.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blood Group Needed <span>*</span></label>
+        <select class="form-control" id="reqBlood">
+          <option>O-</option><option>O+</option><option>A+</option>
+          <option>A-</option><option>B+</option><option>B-</option>
+          <option>AB+</option><option>AB-</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Units Required</label>
+          <input type="number" class="form-control" value="2" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Urgency</label>
+          <select class="form-control">
+            <option>Critical – Within 1 hour</option>
+            <option>Urgent – Within 4 hours</option>
+            <option>Moderate – Within 24 hours</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Patient / Reason</label>
+        <input type="text" class="form-control" placeholder="Patient name or reason">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('bloodRequestModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="sendBloodRequest()">🚨 Broadcast Request</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  injectLayout('blood');
+
+  document.getElementById('donorTbody').innerHTML = Mock.bloodDonors.map(d => {
+    const daysSince = d.lastDonated
+      ? Math.floor((Date.now()-new Date(d.lastDonated))/86400000) : 999;
+    const eligible = daysSince >= 56;
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar avatar-sm">${d.name.charAt(0)}</div>
+            <div style="font-weight:600;color:var(--dark)">${d.name}</div>
+          </div>
+        </td>
+        <td><div class="blood-badge">${d.bloodGroup}</div></td>
+        <td style="font-size:13px">${d.phone}</td>
+        <td class="text-sm text-muted">📍 ${d.location}</td>
+        <td style="font-size:13px">${d.lastDonated||'Never'}</td>
+        <td><span class="badge badge-${eligible?'green':'orange'}">${eligible?'✅ Eligible':'⏳ Wait '+(56-daysSince)+'d'}</span></td>
+        <td><span class="badge badge-${d.available?'green':'grey'}">${d.available?'Available':'Unavailable'}</span></td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="contactDonor('${d.name}')"
+            ${!eligible||!d.available?'disabled style="opacity:0.4"':''}>
+            📱 Contact
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  function registerDonor() { closeModal('addDonorModal'); showToast('✅ Donor registered successfully!','success'); }
+  function sendBloodRequest() {
+    const blood = document.getElementById('reqBlood').value;
+    closeModal('bloodRequestModal');
+    showToast(`🩸 Emergency broadcast sent for ${blood} blood! Contacting 8 nearby donors.`,'error',6000);
+  }
+  function contactDonor(name) { showToast(`📱 WhatsApp message sent to ${name}`,'success'); }
+</script>
+</body>
+</html>

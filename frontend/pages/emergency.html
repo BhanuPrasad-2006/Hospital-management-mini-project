@@ -1,0 +1,290 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergency – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .sos-hero {
+      background: linear-gradient(135deg, #1a0a0a, #3d0a0a);
+      border-radius: var(--radius-lg);
+      padding: 48px;
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .sos-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(229,62,62,0.15) 0%, transparent 70%);
+    }
+    .sos-hero h2 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: white;
+      margin-bottom: 8px;
+    }
+    .sos-hero p { color: rgba(255,255,255,0.6); margin-bottom: 36px; }
+    .big-sos-btn {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #E53E3E, #9B2C2C);
+      color: white;
+      font-size: 18px;
+      font-weight: 800;
+      font-family: var(--font-display);
+      cursor: pointer;
+      animation: sos-ring 2s infinite;
+      box-shadow: 0 0 0 0 rgba(229,62,62,0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 0 auto;
+      transition: transform 0.2s;
+      position: relative;
+      z-index: 1;
+    }
+    .big-sos-btn:hover { transform: scale(1.05); }
+    .big-sos-btn:active { transform: scale(0.97); }
+    .big-sos-btn .sos-icon { font-size: 48px; line-height: 1; }
+    @keyframes sos-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(229,62,62,0.4); }
+      70%  { box-shadow: 0 0 0 30px rgba(229,62,62,0); }
+      100% { box-shadow: 0 0 0 0 rgba(229,62,62,0); }
+    }
+    .sos-status {
+      margin-top: 24px;
+      padding: 14px 24px;
+      background: rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .sos-status.active { color: #FC8181; background: rgba(229,62,62,0.15); }
+    .ambulance-card {
+      background: var(--white);
+      border: 1px solid var(--grey-100);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+      transition: var(--transition);
+    }
+    .ambulance-card:hover { box-shadow: var(--shadow); }
+    .ambulance-icon { font-size: 32px; }
+    .emergency-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>🚨 Emergency</h1>
+      <p>One-click SOS dispatch and ambulance tracking</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-outline btn-sm" onclick="openModal('addAmbulanceModal')">
+        + Add Ambulance
+      </button>
+    </div>
+  </div>
+
+  <!-- SOS Hero -->
+  <div class="sos-hero">
+    <h2>Emergency SOS</h2>
+    <p>Press the button to immediately dispatch the nearest ambulance with patient details</p>
+    <button class="big-sos-btn" id="sosBigBtn" onclick="triggerFullSOS()">
+      <span class="sos-icon">🆘</span>
+      <span>SOS</span>
+    </button>
+    <div class="sos-status" id="sosStatus">
+      📍 Ready – Press SOS to trigger emergency response
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+    <div class="stat-card red">
+      <div class="stat-icon">🚨</div>
+      <div class="stat-value">2</div>
+      <div class="stat-label">Active Emergencies</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon">🚑</div>
+      <div class="stat-value">4</div>
+      <div class="stat-label">Ambulances Available</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-icon">⏱️</div>
+      <div class="stat-value">7 min</div>
+      <div class="stat-label">Avg Response Time</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value">48</div>
+      <div class="stat-label">Resolved This Month</div>
+    </div>
+  </div>
+
+  <div class="emergency-row">
+    <!-- Ambulance Fleet -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🚑 Ambulance Fleet</div>
+          <span class="badge badge-green">4 Available</span>
+        </div>
+        <div id="ambulanceList">
+          <div class="ambulance-card">
+            <div class="ambulance-icon">🚑</div>
+            <div style="flex:1">
+              <div style="font-weight:600;color:var(--dark)">KA-01-AA-1234</div>
+              <div class="text-xs text-muted">Advanced Life Support • Driver: Ravi Kumar</div>
+              <div class="text-xs" style="color:var(--success);font-weight:600;margin-top:2px">📍 1.2 km away</div>
+            </div>
+            <span class="badge badge-green">Available</span>
+          </div>
+          <div class="ambulance-card">
+            <div class="ambulance-icon">🚑</div>
+            <div style="flex:1">
+              <div style="font-weight:600;color:var(--dark)">KA-01-BB-5678</div>
+              <div class="text-xs text-muted">Basic Life Support • Driver: Suresh</div>
+              <div class="text-xs" style="color:var(--success);font-weight:600;margin-top:2px">📍 2.8 km away</div>
+            </div>
+            <span class="badge badge-green">Available</span>
+          </div>
+          <div class="ambulance-card" style="opacity:0.6">
+            <div class="ambulance-icon">🚑</div>
+            <div style="flex:1">
+              <div style="font-weight:600;color:var(--dark)">KA-01-CC-9012</div>
+              <div class="text-xs text-muted">ICU Mobile • Driver: Muthu</div>
+              <div class="text-xs text-muted mt-1">On route to City Hospital</div>
+            </div>
+            <span class="badge badge-orange">Dispatched</span>
+          </div>
+          <div class="ambulance-card" style="opacity:0.5">
+            <div class="ambulance-icon">🔧</div>
+            <div style="flex:1">
+              <div style="font-weight:600;color:var(--dark)">KA-01-DD-3456</div>
+              <div class="text-xs text-muted">Under Maintenance</div>
+            </div>
+            <span class="badge badge-grey">Maintenance</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Emergencies -->
+      <div class="card mt-3" style="margin-top:24px">
+        <div class="card-header">
+          <div class="card-title">🔴 Active Emergencies</div>
+          <span class="badge badge-red">2 Live</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>ID</th><th>Patient</th><th>Location</th><th>Ambulance</th><th>Status</th><th>ETA</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="id-chip">EM001</div></td>
+                <td style="font-weight:600">Mohan Singh</td>
+                <td class="text-sm text-muted">Ward B, Bed 4</td>
+                <td class="text-sm">KA-01-AA-1234</td>
+                <td><span class="badge badge-red">En Route</span></td>
+                <td style="font-weight:700;color:var(--danger)">3 min</td>
+              </tr>
+              <tr>
+                <td><div class="id-chip">EM002</div></td>
+                <td style="font-weight:600">Unknown Patient</td>
+                <td class="text-sm text-muted">MG Road, Bengaluru</td>
+                <td class="text-sm">KA-01-CC-9012</td>
+                <td><span class="badge badge-orange">Dispatched</span></td>
+                <td style="font-weight:700;color:var(--orange)">12 min</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map + Quick Emergency Form -->
+    <div>
+      <!-- Map -->
+      <div class="card mb-3" style="margin-bottom:24px">
+        <div class="card-title mb-2">📍 Live Tracking Map</div>
+        <div class="map-container">
+          <div class="map-icon">🗺️</div>
+          <div style="font-weight:600;font-size:14px">Live Map – Connect Google Maps API</div>
+          <div class="text-sm text-muted">Add GOOGLE_MAPS_API_KEY to enable live tracking</div>
+          <button class="btn btn-primary btn-sm mt-2" style="margin-top:12px">Open in Google Maps</button>
+        </div>
+      </div>
+
+      <!-- Emergency Form -->
+      <div class="card">
+        <div class="card-title mb-3">📋 Log Emergency</div>
+        <div class="form-group">
+          <label class="form-label">Patient Name / ID</label>
+          <input type="text" class="form-control" id="emPatient" placeholder="Search patient or enter name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emergency Type</label>
+          <select class="form-control" id="emType">
+            <option>Cardiac Arrest</option>
+            <option>Accident / Trauma</option>
+            <option>Respiratory Distress</option>
+            <option>Stroke</option>
+            <option>Seizure</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location / Ward</label>
+          <input type="text" class="form-control" id="emLocation" placeholder="e.g. Ward B, Bed 4 or Address">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control" id="emNotes" rows="2" placeholder="Additional details"></textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost flex-1" onclick="getMyLocation()">📍 Use My Location</button>
+          <button class="btn btn-danger flex-1" onclick="logEmergency()">🚨 Dispatch Ambulance</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/emergency.js"></script>
+<script>injectLayout('emergency');</script>
+</body>
+</html>

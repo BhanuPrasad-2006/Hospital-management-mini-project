@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacy – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>💊 Pharmacy</h1>
+      <p>Medicine inventory, stock management and dispensing</p>
+    </div>
+    <div class="page-header-actions">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="medSearch" placeholder="Search medicines..." oninput="filterMeds()">
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="openModal('dispenseModal')">📤 Dispense</button>
+      <button class="btn btn-primary" onclick="openModal('addMedModal')">+ Add Medicine</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+    <div class="stat-card blue"><div class="stat-icon">💊</div><div class="stat-value">248</div><div class="stat-label">Total Medicines</div></div>
+    <div class="stat-card red"><div class="stat-icon">⚠️</div><div class="stat-value">3</div><div class="stat-label">Low Stock</div></div>
+    <div class="stat-card orange"><div class="stat-icon">📅</div><div class="stat-value">7</div><div class="stat-label">Expiring Soon</div></div>
+    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">₹84K</div><div class="stat-label">Stock Value</div></div>
+  </div>
+
+  <!-- Low Stock Alert -->
+  <div class="alert alert-danger mb-3" style="margin-bottom:20px">
+    ⚠️ <strong>3 medicines are below reorder level:</strong> Amoxicillin 250mg, Amlodipine 5mg, Insulin 30IU. Please reorder immediately.
+  </div>
+
+  <!-- Medicine Table -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Medicine Inventory</div>
+      <div style="display:flex;gap:8px">
+        <select class="filter-select" id="catFilter" onchange="filterMeds()">
+          <option value="">All Categories</option>
+          <option>Painkiller</option><option>Antibiotic</option>
+          <option>Diabetic</option><option>BP</option><option>Vitamin</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Medicine</th><th>Category</th><th>Stock</th><th>Reorder Level</th><th>Unit Price</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="medTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Add Medicine Modal -->
+<div class="modal-overlay" id="addMedModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">+ Add Medicine</span>
+      <button class="modal-close" onclick="closeModal('addMedModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Medicine Name <span>*</span></label>
+          <input type="text" class="form-control" id="mName" placeholder="Brand name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Generic Name</label>
+          <input type="text" class="form-control" id="mGeneric" placeholder="Chemical name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-control" id="mCat">
+            <option>Painkiller</option><option>Antibiotic</option>
+            <option>Diabetic</option><option>BP</option><option>Vitamin</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit</label>
+          <select class="form-control" id="mUnit">
+            <option>Tablet</option><option>Capsule</option>
+            <option>Syrup (ml)</option><option>Injection</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Stock Quantity</label>
+          <input type="number" class="form-control" id="mStock" placeholder="Number of units">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reorder Level</label>
+          <input type="number" class="form-control" id="mReorder" placeholder="Alert when below this">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unit Price (₹)</label>
+          <input type="number" class="form-control" id="mPrice" placeholder="Price per unit">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expiry Date</label>
+          <input type="month" class="form-control" id="mExpiry">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addMedModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addMedicine()">Add Medicine</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dispense Modal -->
+<div class="modal-overlay" id="dispenseModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">📤 Dispense Medicine</span>
+      <button class="modal-close" onclick="closeModal('dispenseModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Patient</label>
+        <select class="form-control">
+          <option>P001 – Ramesh Kumar</option>
+          <option>P002 – Priya Nair</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Medicine</label>
+        <select class="form-control" id="dispenseMed">
+          <option>Metformin 500mg</option>
+          <option>Paracetamol 500mg</option>
+          <option>Vitamin D3 60000 IU</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input type="number" class="form-control" value="30" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prescription Ref</label>
+          <input type="text" class="form-control" placeholder="Prescription ID">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('dispenseModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="dispenseMedicine()">Dispense & Deduct Stock</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  injectLayout('pharmacy');
+  let allMeds = [...Mock.medicines];
+
+  function renderMeds(meds) {
+    document.getElementById('medTbody').innerHTML = meds.map(m => {
+      const isLow = m.stock < m.reorder;
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--dark)">${m.name}</div>
+            <div class="text-xs text-muted">${m.category}</div>
+          </td>
+          <td><span class="badge badge-blue">${m.category}</span></td>
+          <td>
+            <div style="font-weight:700;color:${isLow?'var(--danger)':'var(--dark)'}">${m.stock}</div>
+            <div class="progress-bar-wrap" style="margin-top:4px;width:80px">
+              <div class="progress-bar ${isLow?'red':'green'}" style="width:${Math.min(100,(m.stock/500)*100)}%"></div>
+            </div>
+          </td>
+          <td style="font-size:13px">${m.reorder} units</td>
+          <td style="font-weight:600">₹${m.price.toFixed(2)}</td>
+          <td style="font-family:var(--font-mono);font-size:12px">${m.expiry}</td>
+          <td>${isLow
+            ? '<span class="badge badge-red">⚠️ Low Stock</span>'
+            : '<span class="badge badge-green">✅ In Stock</span>'}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="openModal('dispenseModal')">Dispense</button>
+              <button class="btn btn-outline btn-sm">Edit</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function filterMeds() {
+    const q   = document.getElementById('medSearch').value.toLowerCase();
+    const cat = document.getElementById('catFilter').value;
+    renderMeds(allMeds.filter(m =>
+      (!q || m.name.toLowerCase().includes(q)) &&
+      (!cat || m.category === cat)
+    ));
+  }
+
+  function addMedicine() {
+    const name = document.getElementById('mName').value.trim();
+    if (!name) { showToast('Medicine name required', 'warning'); return; }
+    allMeds.push({
+      id:`M00${allMeds.length+1}`, name,
+      category: document.getElementById('mCat').value,
+      stock:    parseInt(document.getElementById('mStock').value)||0,
+      reorder:  parseInt(document.getElementById('mReorder').value)||100,
+      price:    parseFloat(document.getElementById('mPrice').value)||0,
+      expiry:   document.getElementById('mExpiry').value||'2026-01'
+    });
+    renderMeds(allMeds);
+    closeModal('addMedModal');
+    showToast(`✅ ${name} added to inventory`, 'success');
+  }
+
+  function dispenseMedicine() {
+    const med = document.getElementById('dispenseMed').value;
+    closeModal('dispenseModal');
+    showToast(`✅ ${med} dispensed. Stock updated.`, 'success');
+  }
+
+  renderMeds(allMeds);
+</script>
+</body>
+</html>
