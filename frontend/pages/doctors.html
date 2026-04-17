@@ -1,0 +1,429 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="app-layout" id="app-layout">
+  <!-- Sidebar injected by layout.js -->
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1>Good Morning 👋</h1>
+        <p id="dashboardDate">Monday, January 15, 2024</p>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn btn-outline btn-sm" onclick="location.href='admission.html'">
+          🛏️ New Admission
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="location.href='patients.html'">
+          + Register Patient
+        </button>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-icon">👤</div>
+        <div class="stat-value" id="statPatients">248</div>
+        <div class="stat-label">Total Patients</div>
+        <div class="stat-change up">↑ 12 this week</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">🛏️</div>
+        <div class="stat-value" id="statBeds">34</div>
+        <div class="stat-label">Available Beds</div>
+        <div class="stat-change down">↓ 3 from yesterday</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value" id="statAppts">18</div>
+        <div class="stat-label">Today's Appointments</div>
+        <div class="stat-change up">↑ 5 from yesterday</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">🚨</div>
+        <div class="stat-value" id="statEmergency">2</div>
+        <div class="stat-label">Active Emergencies</div>
+        <div class="stat-change up" style="color:var(--danger)">⚠️ Needs attention</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon">👨‍⚕️</div>
+        <div class="stat-value" id="statDoctors">16</div>
+        <div class="stat-label">Doctors On Duty</div>
+        <div class="stat-change up">↑ 4 available now</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-icon">💊</div>
+        <div class="stat-value" id="statMeds">3</div>
+        <div class="stat-label">Low Stock Medicines</div>
+        <div class="stat-change down" style="color:var(--orange)">⚠️ Reorder needed</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">🩸</div>
+        <div class="stat-value">12</div>
+        <div class="stat-label">Blood Units Available</div>
+        <div class="stat-change up">O+ most needed</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value">₹1.2L</div>
+        <div class="stat-label">Today's Revenue</div>
+        <div class="stat-change up">↑ 8% from yesterday</div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-action-grid">
+      <a href="patients.html" class="quick-action">
+        <div class="qa-icon">👤</div>
+        <div class="qa-label">Register Patient</div>
+      </a>
+      <a href="appointments.html" class="quick-action">
+        <div class="qa-icon">📅</div>
+        <div class="qa-label">Book Appointment</div>
+      </a>
+      <a href="prescription.html" class="quick-action">
+        <div class="qa-icon">🤖</div>
+        <div class="qa-label">Scan Prescription</div>
+      </a>
+      <a href="emergency.html" class="quick-action">
+        <div class="qa-icon">🚨</div>
+        <div class="qa-label">Emergency SOS</div>
+      </a>
+      <a href="blood-bank.html" class="quick-action">
+        <div class="qa-icon">🩸</div>
+        <div class="qa-label">Find Blood Donor</div>
+      </a>
+      <a href="billing.html" class="quick-action">
+        <div class="qa-icon">💰</div>
+        <div class="qa-label">Generate Bill</div>
+      </a>
+      <a href="pharmacy.html" class="quick-action">
+        <div class="qa-icon">💊</div>
+        <div class="qa-label">Pharmacy Stock</div>
+      </a>
+      <a href="security.html" class="quick-action">
+        <div class="qa-icon">🔐</div>
+        <div class="qa-label">Security Logs</div>
+      </a>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+      <div class="dashboard-main">
+
+        <!-- Patient Admissions Chart -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Patient Admissions</div>
+              <div class="card-subtitle">Last 7 days overview</div>
+            </div>
+            <select class="filter-select" id="chartRange">
+              <option>Last 7 Days</option>
+              <option>Last 30 Days</option>
+              <option>Last 3 Months</option>
+            </select>
+          </div>
+          <div class="chart-container">
+            <canvas id="admissionsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Patients -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Recent Patients</div>
+              <div class="card-subtitle">Latest registrations</div>
+            </div>
+            <a href="patients.html" class="btn btn-ghost btn-sm">View All →</a>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="recentPatientsTable">
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Blood</th>
+                  <th>Doctor</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="recentPatientsTbody">
+                <!-- filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bed Occupancy -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Bed Occupancy</div>
+              <div class="card-subtitle">Real-time ward status</div>
+            </div>
+            <span class="badge badge-blue">48 Total Beds</span>
+          </div>
+          <div class="bed-chart" id="bedChart">
+            <!-- filled by JS -->
+          </div>
+          <div class="bed-legend">
+            <div class="bed-legend-item"><div class="bed-legend-dot" style="background:var(--danger)"></div> Occupied (14)</div>
+            <div class="bed-legend-item"><div class="bed-legend-dot" style="background:var(--success)"></div> Available (28)</div>
+            <div class="bed-legend-item"><div class="bed-legend-dot" style="background:var(--warning)"></div> Reserved (4)</div>
+            <div class="bed-legend-item"><div class="bed-legend-dot" style="background:var(--grey-200)"></div> Maintenance (2)</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="dashboard-side">
+
+        <!-- Alerts -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚠️ Active Alerts</div>
+            <span class="badge badge-red">3 Critical</span>
+          </div>
+          <div class="alert-panel">
+            <div class="alert-panel-item critical">
+              🆘 Patient Bed 4 – ICU vitals critical
+            </div>
+            <div class="alert-panel-item critical">
+              🩸 O- blood stock critically low (2 units)
+            </div>
+            <div class="alert-panel-item warning">
+              💊 Amoxicillin stock below reorder level
+            </div>
+            <div class="alert-panel-item warning">
+              📅 3 appointment no-shows today
+            </div>
+            <div class="alert-panel-item info">
+              🔐 Unusual login attempt blocked
+            </div>
+          </div>
+        </div>
+
+        <!-- Today's Appointments -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Today's Schedule</div>
+            <a href="appointments.html" class="btn btn-ghost btn-sm">View All</a>
+          </div>
+          <div class="appt-list" id="todayAppts">
+            <div class="appt-item">
+              <div class="appt-time">09:00</div>
+              <div class="appt-info">
+                <div class="appt-patient">Ramesh Kumar</div>
+                <div class="appt-doctor">Dr. Sharma – Cardiology</div>
+              </div>
+              <span class="badge badge-green">Confirmed</span>
+            </div>
+            <div class="appt-item">
+              <div class="appt-time">10:30</div>
+              <div class="appt-info">
+                <div class="appt-patient">Priya Nair</div>
+                <div class="appt-doctor">Dr. Mehta – Neurology</div>
+              </div>
+              <span class="badge badge-orange">Waiting</span>
+            </div>
+            <div class="appt-item">
+              <div class="appt-time">11:00</div>
+              <div class="appt-info">
+                <div class="appt-patient">Suresh Reddy</div>
+                <div class="appt-doctor">Dr. Patel – Orthopedic</div>
+              </div>
+              <span class="badge badge-blue">Scheduled</span>
+            </div>
+            <div class="appt-item">
+              <div class="appt-time">14:00</div>
+              <div class="appt-info">
+                <div class="appt-patient">Kavitha Devi</div>
+                <div class="appt-doctor">Dr. Iyer – Pediatrics</div>
+              </div>
+              <span class="badge badge-blue">Scheduled</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue Donut -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Revenue Breakdown</div>
+            <div class="card-subtitle">This month</div>
+          </div>
+          <div class="ring-chart-wrap">
+            <canvas id="revenueChart" width="120" height="120" style="max-width:120px"></canvas>
+            <div class="ring-legend">
+              <div class="ring-legend-item">
+                <div class="ring-legend-label"><div class="ring-dot" style="background:#0A6EBD"></div>OPD</div>
+                <div class="ring-legend-value">₹45K</div>
+              </div>
+              <div class="ring-legend-item">
+                <div class="ring-legend-label"><div class="ring-dot" style="background:#00C9A7"></div>IPD</div>
+                <div class="ring-legend-value">₹82K</div>
+              </div>
+              <div class="ring-legend-item">
+                <div class="ring-legend-label"><div class="ring-dot" style="background:#F6AD55"></div>Pharmacy</div>
+                <div class="ring-legend-value">₹28K</div>
+              </div>
+              <div class="ring-legend-item">
+                <div class="ring-legend-label"><div class="ring-dot" style="background:#805AD5"></div>Lab</div>
+                <div class="ring-legend-value">₹19K</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Activity</div>
+          </div>
+          <div class="activity-feed">
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--primary-light)">👤</div>
+              <div class="activity-text">
+                <p><strong>Ramesh Kumar</strong> registered as new patient</p>
+                <div class="activity-time">5 min ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--danger-light)">🚨</div>
+              <div class="activity-text">
+                <p><strong>Emergency SOS</strong> triggered in Ward B</p>
+                <div class="activity-time">12 min ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--success-light)">💊</div>
+              <div class="activity-text">
+                <p><strong>Amoxicillin</strong> stock updated by Pharmacist</p>
+                <div class="activity-time">28 min ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--purple-light)">🤖</div>
+              <div class="activity-text">
+                <p><strong>AI Prescription</strong> scanned for Priya Nair</p>
+                <div class="activity-time">1 hr ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon" style="background:var(--warning-light)">💰</div>
+              <div class="activity-text">
+                <p><strong>Bill #INV-0042</strong> paid – ₹12,500</p>
+                <div class="activity-time">2 hr ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /main-wrapper (closed by layout) -->
+</div><!-- /app-layout -->
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  // Inject sidebar
+  injectLayout('dashboard');
+
+  // Date
+  document.getElementById('dashboardDate').textContent =
+    new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // Recent patients table
+  const tbody = document.getElementById('recentPatientsTbody');
+  Mock.patients.forEach(p => {
+    const statusColors = { Admitted:'blue', OPD:'green', Discharged:'grey', Critical:'red' };
+    tbody.innerHTML += `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar avatar-sm">${p.name.charAt(0)}</div>
+            <div>
+              <div style="font-weight:600;color:var(--dark)">${p.name}</div>
+              <div class="text-xs text-muted">${p.id} • ${p.age}y</div>
+            </div>
+          </div>
+        </td>
+        <td><div class="blood-badge">${p.bloodGroup}</div></td>
+        <td style="font-size:13px">${p.doctor}</td>
+        <td><span class="badge badge-${statusColors[p.status]||'grey'}">${p.status}</span></td>
+        <td>
+          <a href="patients.html" class="btn btn-ghost btn-sm">View</a>
+        </td>
+      </tr>`;
+  });
+
+  // Bed chart
+  const bedStatuses = ['occupied','available','available','reserved','available',
+    'occupied','available','maintenance','available','available','occupied',
+    'available','available','available','reserved','occupied'];
+  const bedChart = document.getElementById('bedChart');
+  for (let i = 0; i < 48; i++) {
+    const s = bedStatuses[i % bedStatuses.length];
+    bedChart.innerHTML += `<div class="bed-unit" data-status="${s}" title="Bed ${i+1}: ${s}"></div>`;
+  }
+
+  // Admissions Chart
+  const admCtx = document.getElementById('admissionsChart').getContext('2d');
+  new Chart(admCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [
+        { label: 'Admissions', data: [8,12,6,15,10,7,9], backgroundColor: 'rgba(10,110,189,0.8)', borderRadius: 6 },
+        { label: 'Discharges', data: [5,9,8,11,12,6,8],  backgroundColor: 'rgba(0,201,167,0.8)',  borderRadius: 6 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Revenue Donut
+  const revCtx = document.getElementById('revenueChart').getContext('2d');
+  new Chart(revCtx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [45, 82, 28, 19],
+        backgroundColor: ['#0A6EBD','#00C9A7','#F6AD55','#805AD5'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: { responsive: false, cutout: '72%', plugins: { legend: { display: false } } }
+  });
+</script>
+</body>
+</html>

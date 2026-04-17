@@ -1,0 +1,886 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArogyaSeva HMS – Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0A6EBD;
+      --primary-dark: #084E8A;
+      --accent: #00C9A7;
+      --danger: #E53E3E;
+      --success: #38A169;
+      --navy: #0D1B2A;
+      --grey-100: #EDF2F7;
+      --grey-200: #CBD5E0;
+      --grey-400: #718096;
+      --grey-600: #4A5568;
+      --dark: #1A202C;
+      --white: #FFFFFF;
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      background: var(--navy);
+      overflow: hidden;
+    }
+
+    /* ── Left Panel ────────────────────────── */
+    .left-panel {
+      flex: 1;
+      background: linear-gradient(145deg, #0D1B2A 0%, #0A2540 50%, #0D3060 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(10,110,189,0.15) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+    }
+
+    .brand {
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 60px;
+    }
+
+    .brand-logo {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 20px;
+      box-shadow: 0 20px 60px rgba(10,110,189,0.4);
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 40px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -1px;
+      line-height: 1.1;
+    }
+
+    .brand-name span { color: var(--accent); }
+
+    .brand-tagline {
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .features {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
+    }
+
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .feature-text strong {
+      display: block;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .feature-text span {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── SOS Floating Button ───────────────── */
+    .sos-float {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+    }
+
+    .sos-float-btn {
+      background: linear-gradient(135deg, #E53E3E, #9B2C2C);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 32px rgba(229,62,62,0.4);
+      animation: sos-pulse 2s infinite;
+    }
+
+    @keyframes sos-pulse {
+      0%,100% { box-shadow: 0 8px 32px rgba(229,62,62,0.4); }
+      50%      { box-shadow: 0 8px 32px rgba(229,62,62,0.7), 0 0 0 12px rgba(229,62,62,0.1); }
+    }
+
+    .sos-float-btn:hover { transform: scale(1.05); }
+    .sos-note {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── Right Panel ───────────────────────── */
+    .right-panel {
+      width: 480px;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 50px 48px;
+      position: relative;
+      overflow-y: auto;
+    }
+
+    .form-header { margin-bottom: 32px; }
+
+    .form-header h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    .form-header p {
+      font-size: 14px;
+      color: var(--grey-400);
+    }
+
+    /* ── Role Selector ─────────────────────── */
+    .role-selector {
+      display: flex;
+      background: var(--grey-100);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+
+    .role-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--grey-400);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .role-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* ── Mode Switch ───────────────────────── */
+    .mode-switch {
+      display: flex;
+      gap: 0;
+      border: 1.5px solid var(--grey-200);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: white;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--grey-400);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .mode-btn:first-child { border-right: 1.5px solid var(--grey-200); }
+
+    /* ── Form ──────────────────────────────── */
+    .form-group {
+      margin-bottom: 18px;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--grey-600);
+      margin-bottom: 7px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--grey-200);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: var(--font-body);
+      color: var(--dark);
+      background: white;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(10,110,189,0.1);
+    }
+
+    .form-control::placeholder { color: var(--grey-400); }
+
+    .form-control.error { border-color: var(--danger); }
+
+    .input-icon {
+      position: relative;
+    }
+
+    .input-icon .form-control { padding-left: 42px; }
+
+    .input-icon .icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: var(--grey-400);
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--grey-400);
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ── Doctor Code Info ──────────────────── */
+    .code-info {
+      background: #EBF8FF;
+      border: 1px solid #BEE3F8;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #2B6CB0;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    /* ── Submit Button ─────────────────────── */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+      margin-top: 4px;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(10,110,189,0.35);
+    }
+
+    .submit-btn:active { transform: translateY(0); }
+
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ── Error & Success ───────────────────── */
+    .error-msg {
+      background: #FFF5F5;
+      border: 1px solid #FEB2B2;
+      color: var(--danger);
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .error-msg.show { display: flex; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--grey-400);
+      font-size: 12px;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--grey-200);
+    }
+
+    .form-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--grey-400);
+    }
+
+    .form-footer a {
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* ── Patient Signup Fields ─────────────── */
+    #signupFields { display: none; }
+
+    /* ── Loading Spinner ───────────────────── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ────────────────────────── */
+    @media (max-width: 900px) {
+      .left-panel { display: none; }
+      .right-panel { width: 100%; padding: 40px 28px; }
+    }
+
+    @media (max-width: 480px) {
+      .right-panel { padding: 32px 20px; }
+      .sos-float { bottom: 20px; }
+    }
+
+    /* Animations */
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<!-- Left Panel -->
+<div class="left-panel">
+  <div class="brand">
+    <div class="brand-logo">🏥</div>
+    <div class="brand-name">Arogya<span>Seva</span></div>
+    <div class="brand-tagline">Smart Hospital Management System</div>
+  </div>
+
+  <div class="features">
+    <div class="feature-item">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-text">
+        <strong>AI Prescription Scanner</strong>
+        <span>Reads handwritten prescriptions in 8 languages</span>
+      </div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">🚨</div>
+      <div class="feature-text">
+        <strong>One-Click SOS Emergency</strong>
+        <span>No login needed – ambulance dispatched instantly</span>
+      </div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">🔐</div>
+      <div class="feature-text">
+        <strong>Zero-Trust Security</strong>
+        <span>AES-256 encryption, blockchain audit logs</span>
+      </div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">🩸</div>
+      <div class="feature-text">
+        <strong>Smart Blood Network</strong>
+        <span>Find compatible donors within 20km instantly</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Right Panel -->
+<div class="right-panel">
+
+  <div class="form-header">
+    <h2 id="formTitle">Welcome Back</h2>
+    <p id="formSubtitle">Login to access your ArogyaSeva account</p>
+  </div>
+
+  <!-- Role Selector -->
+  <div class="role-selector">
+    <button class="role-btn active" id="rolePatient" onclick="setRole('patient')">
+      👤 Patient
+    </button>
+    <button class="role-btn" id="roleDoctor" onclick="setRole('doctor')">
+      👨‍⚕️ Doctor
+    </button>
+    <button class="role-btn" id="roleAdmin" onclick="setRole('admin')">
+      🔑 Admin
+    </button>
+  </div>
+
+  <!-- Login / Signup Switch -->
+  <div class="mode-switch">
+    <button class="mode-btn active" id="modeLogin" onclick="setMode('login')">Login</button>
+    <button class="mode-btn" id="modeSignup" onclick="setMode('signup')">Sign Up</button>
+  </div>
+
+  <!-- Error Message -->
+  <div class="error-msg" id="errorMsg">
+    <span>⚠️</span>
+    <span id="errorText">Invalid credentials</span>
+  </div>
+
+  <!-- Doctor Code Info -->
+  <div class="code-info" id="doctorCodeInfo" style="display:none">
+    ℹ️ Use the unique Doctor Code issued to you when you joined the hospital. Contact Admin if you haven't received it.
+  </div>
+
+  <!-- LOGIN FORM -->
+  <div id="loginForm">
+
+    <!-- Patient Login -->
+    <div id="loginPatientFields" class="fade-in">
+      <div class="form-group">
+        <label class="form-label">Patient ID or Mobile Number</label>
+        <div class="input-icon">
+          <span class="icon">📱</span>
+          <input type="text" class="form-control" id="loginPatientId" placeholder="e.g. PAT-001 or 9876543210">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-icon" style="position:relative">
+          <span class="icon">🔒</span>
+          <input type="password" class="form-control" id="loginPatientPass" placeholder="Enter your password">
+          <button class="pw-toggle" onclick="togglePw('loginPatientPass',this)">👁</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctor Login -->
+    <div id="loginDoctorFields" class="fade-in" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Doctor Code</label>
+        <div class="input-icon">
+          <span class="icon">🔑</span>
+          <input type="text" class="form-control" id="loginDoctorCode"
+            placeholder="e.g. DOC-2024-CARD-001" style="font-family:monospace;letter-spacing:1px">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-icon" style="position:relative">
+          <span class="icon">🔒</span>
+          <input type="password" class="form-control" id="loginDoctorPass" placeholder="Enter your password">
+          <button class="pw-toggle" onclick="togglePw('loginDoctorPass',this)">👁</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Login -->
+    <div id="loginAdminFields" class="fade-in" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Admin Email</label>
+        <div class="input-icon">
+          <span class="icon">📧</span>
+          <input type="email" class="form-control" id="loginAdminEmail" placeholder="admin@hospital.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-icon" style="position:relative">
+          <span class="icon">🔒</span>
+          <input type="password" class="form-control" id="loginAdminPass" placeholder="Enter admin password">
+          <button class="pw-toggle" onclick="togglePw('loginAdminPass',this)">👁</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:right;margin-bottom:20px">
+      <a href="#" style="font-size:13px;color:var(--primary);font-weight:600">Forgot password?</a>
+    </div>
+
+    <button class="submit-btn" id="loginBtn" onclick="handleLogin()">Login →</button>
+
+    <div class="form-footer" id="signupLink">
+      Don't have an account? <a onclick="setMode('signup')">Sign Up</a>
+    </div>
+  </div>
+
+  <!-- SIGNUP FORM -->
+  <div id="signupForm" style="display:none">
+
+    <!-- Patient Signup -->
+    <div id="signupPatientFields" class="fade-in">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name <span style="color:red">*</span></label>
+          <input type="text" class="form-control" id="spFirst" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name <span style="color:red">*</span></label>
+          <input type="text" class="form-control" id="spLast" placeholder="Last name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mobile Number <span style="color:red">*</span></label>
+          <input type="tel" class="form-control" id="spPhone" placeholder="10-digit number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth <span style="color:red">*</span></label>
+          <input type="date" class="form-control" id="spDob">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Blood Group</label>
+          <select class="form-control" id="spBlood">
+            <option value="">Select</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option>
+            <option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select class="form-control" id="spGender">
+            <option value="">Select</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ABHA ID (Optional)</label>
+        <input type="text" class="form-control" id="spAbha" placeholder="14-digit Ayushman Bharat ID">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Password <span style="color:red">*</span></label>
+          <input type="password" class="form-control" id="spPass" placeholder="Min 8 characters">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password <span style="color:red">*</span></label>
+          <input type="password" class="form-control" id="spConfirm" placeholder="Repeat password">
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctor Signup (disabled – admin creates) -->
+    <div id="signupDoctorFields" class="fade-in" style="display:none">
+      <div style="background:#FFFBEB;border:1px solid #F6AD55;border-radius:10px;padding:20px;text-align:center;color:#C05621">
+        <div style="font-size:32px;margin-bottom:12px">🔒</div>
+        <div style="font-weight:700;margin-bottom:6px">Doctor Accounts Created by Admin</div>
+        <div style="font-size:13px">When you join the hospital, the Admin creates your account and provides you a unique Doctor Code. Use that code to Login.</div>
+      </div>
+    </div>
+
+    <!-- Admin Signup (disabled) -->
+    <div id="signupAdminFields" class="fade-in" style="display:none">
+      <div style="background:#FFFBEB;border:1px solid #F6AD55;border-radius:10px;padding:20px;text-align:center;color:#C05621">
+        <div style="font-size:32px;margin-bottom:12px">🔒</div>
+        <div style="font-weight:700;margin-bottom:6px">Admin Account Setup</div>
+        <div style="font-size:13px">Admin accounts are configured during hospital setup. Contact your system administrator for access.</div>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="signupBtn" onclick="handleSignup()" style="margin-top:16px">
+      Create Account →
+    </button>
+
+    <div class="form-footer">
+      Already have an account? <a onclick="setMode('login')">Login</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- SOS Floating Button (No login needed) -->
+<div class="sos-float">
+  <button class="sos-float-btn" onclick="triggerSOS()">
+    🆘 Emergency SOS
+  </button>
+  <div class="sos-note">No login required for emergency</div>
+</div>
+
+<script>
+  let currentRole = 'patient';
+  let currentMode = 'login';
+
+  /* ── Role Switch ───────────────────────── */
+  function setRole(role) {
+    currentRole = role;
+    ['patient','doctor','admin'].forEach(r => {
+      document.getElementById(`role${r.charAt(0).toUpperCase()+r.slice(1)}`).classList.toggle('active', r === role);
+      const loginEl  = document.getElementById(`login${r.charAt(0).toUpperCase()+r.slice(1)}Fields`);
+      const signupEl = document.getElementById(`signup${r.charAt(0).toUpperCase()+r.slice(1)}Fields`);
+      if (loginEl)  loginEl.style.display  = r === role ? 'block' : 'none';
+      if (signupEl) signupEl.style.display = r === role ? 'block' : 'none';
+    });
+
+    const titles = {
+      patient: { login: 'Welcome Back 👤', signup: 'Create Patient Account', sub: 'Manage your health journey' },
+      doctor:  { login: 'Doctor Login 👨‍⚕️', signup: 'Doctor Registration', sub: 'Use your hospital-issued Doctor Code' },
+      admin:   { login: 'Admin Login 🔑', signup: 'Admin Setup', sub: 'System administration access' },
+    };
+
+    document.getElementById('formTitle').textContent    = titles[role][currentMode] || titles[role].login;
+    document.getElementById('formSubtitle').textContent = titles[role].sub;
+    document.getElementById('doctorCodeInfo').style.display = (role === 'doctor' && currentMode === 'login') ? 'flex' : 'none';
+    document.getElementById('errorMsg').classList.remove('show');
+
+    // Doctor signup shows "admin creates" notice
+    const signupBtn = document.getElementById('signupBtn');
+    if (signupBtn) signupBtn.style.display = (role === 'patient') ? 'block' : 'none';
+  }
+
+  /* ── Mode Switch ───────────────────────── */
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('modeLogin').classList.toggle('active', mode === 'login');
+    document.getElementById('modeSignup').classList.toggle('active', mode === 'signup');
+    document.getElementById('loginForm').style.display  = mode === 'login'  ? 'block' : 'none';
+    document.getElementById('signupForm').style.display = mode === 'signup' ? 'block' : 'none';
+    document.getElementById('errorMsg').classList.remove('show');
+    setRole(currentRole);
+  }
+
+  /* ── Toggle password visibility ─────────── */
+  function togglePw(id, btn) {
+    const inp = document.getElementById(id);
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+  }
+
+  /* ── Login Handler ─────────────────────── */
+  function handleLogin() {
+    hideError();
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Logging in...';
+
+    setTimeout(() => {
+      if (currentRole === 'patient') {
+        const id = document.getElementById('loginPatientId').value.trim();
+        const pw = document.getElementById('loginPatientPass').value;
+        if (!id || !pw) { showError('Please enter Patient ID and Password'); btn.disabled=false; btn.textContent='Login →'; return; }
+        // Mock: any patient ID + password works for dev
+        localStorage.setItem('user_role', 'patient');
+        localStorage.setItem('user_name', 'Ramesh Kumar');
+        localStorage.setItem('patient_id', id.startsWith('PAT') ? id : 'PAT-001');
+        localStorage.setItem('token', 'patient-token-' + Date.now());
+        window.location.href = 'pages/patient/dashboard.html';
+      }
+      else if (currentRole === 'doctor') {
+        const code = document.getElementById('loginDoctorCode').value.trim();
+        const pw   = document.getElementById('loginDoctorPass').value;
+        if (!code || !pw) { showError('Please enter Doctor Code and Password'); btn.disabled=false; btn.textContent='Login →'; return; }
+        // Mock: any code works for dev. Real: validate against DB
+        localStorage.setItem('user_role', 'doctor');
+        localStorage.setItem('user_name', 'Dr. Anil Sharma');
+        localStorage.setItem('doctor_code', code);
+        localStorage.setItem('token', 'doctor-token-' + Date.now());
+        window.location.href = 'pages/doctor/dashboard.html';
+      }
+      else if (currentRole === 'admin') {
+        const email = document.getElementById('loginAdminEmail').value.trim();
+        const pw    = document.getElementById('loginAdminPass').value;
+        if (!email || !pw) { showError('Please enter email and password'); btn.disabled=false; btn.textContent='Login →'; return; }
+        if (email !== 'admin@hospital.com') { showError('Invalid admin credentials'); btn.disabled=false; btn.textContent='Login →'; return; }
+        localStorage.setItem('user_role', 'admin');
+        localStorage.setItem('user_name', 'System Admin');
+        localStorage.setItem('token', 'admin-token-' + Date.now());
+        window.location.href = 'pages/admin/dashboard.html';
+      }
+    }, 1200);
+  }
+
+  /* ── Signup Handler ─────────────────────── */
+  function handleSignup() {
+    if (currentRole !== 'patient') return;
+    hideError();
+
+    const first = document.getElementById('spFirst').value.trim();
+    const last  = document.getElementById('spLast').value.trim();
+    const phone = document.getElementById('spPhone').value.trim();
+    const pass  = document.getElementById('spPass').value;
+    const conf  = document.getElementById('spConfirm').value;
+    const dob   = document.getElementById('spDob').value;
+
+    if (!first || !last) { showError('Please enter your full name'); return; }
+    if (!phone || phone.length !== 10) { showError('Enter valid 10-digit mobile number'); return; }
+    if (!dob) { showError('Date of birth is required'); return; }
+    if (pass.length < 8) { showError('Password must be at least 8 characters'); return; }
+    if (pass !== conf) { showError('Passwords do not match'); return; }
+
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Creating account...';
+
+    setTimeout(() => {
+      // Generate unique Patient ID
+      const patientId = 'PAT-' + String(Math.floor(Math.random()*9000)+1000);
+      localStorage.setItem('user_role', 'patient');
+      localStorage.setItem('user_name', `${first} ${last}`);
+      localStorage.setItem('patient_id', patientId);
+      localStorage.setItem('token', 'patient-token-' + Date.now());
+
+      // Show success with patient ID
+      btn.innerHTML = `✅ Account Created! Your Patient ID: <strong>${patientId}</strong>`;
+      btn.style.background = 'var(--success)';
+
+      setTimeout(() => {
+        window.location.href = 'pages/patient/dashboard.html';
+      }, 2000);
+    }, 1500);
+  }
+
+  /* ── SOS (no login required) ────────────── */
+  function triggerSOS() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          alert(`🆘 SOS TRIGGERED!\n\nYour location has been sent:\nLat: ${pos.coords.latitude.toFixed(4)}\nLng: ${pos.coords.longitude.toFixed(4)}\n\nAmbulance dispatched. ETA: ~5-8 minutes\n\nStay calm and stay on the line.`);
+        },
+        () => {
+          alert('🆘 SOS TRIGGERED!\n\nLocation unavailable, but SOS has been sent to nearest ambulance.\n\nETA: ~8-10 minutes. Stay calm.');
+        }
+      );
+    } else {
+      alert('🆘 SOS TRIGGERED! Ambulance dispatched to your area.');
+    }
+  }
+
+  /* ── Error helpers ─────────────────────── */
+  function showError(msg) {
+    document.getElementById('errorText').textContent = msg;
+    document.getElementById('errorMsg').classList.add('show');
+    const btns = ['loginBtn','signupBtn'];
+    btns.forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.disabled = false; b.textContent = id.includes('login') ? 'Login →' : 'Create Account →'; }
+    });
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').classList.remove('show');
+  }
+
+  // Enter key submits
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (currentMode === 'login') handleLogin();
+      else handleSignup();
+    }
+  });
+
+  // Redirect if already logged in
+  const role = localStorage.getItem('user_role');
+  const token = localStorage.getItem('token');
+  if (role && token) {
+    const redirects = {
+      patient: 'pages/patient/dashboard.html',
+      doctor:  'pages/doctor/dashboard.html',
+      admin:   'pages/admin/dashboard.html',
+    };
+    if (redirects[role]) window.location.href = redirects[role];
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Prescription – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .upload-zone {
+      border: 2px dashed var(--grey-200);
+      border-radius: var(--radius-lg);
+      padding: 60px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: var(--grey-50);
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .upload-zone input { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%; }
+    .upload-icon { font-size: 56px; margin-bottom: 16px; }
+    .preview-img {
+      max-width: 100%;
+      max-height: 360px;
+      border-radius: var(--radius);
+      object-fit: contain;
+      display: none;
+    }
+    .result-card {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 1px solid var(--success);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .medicine-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px;
+      background: var(--white);
+      border: 1px solid var(--grey-100);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+    }
+    .medicine-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .diet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .diet-section { padding: 16px; border-radius: var(--radius-sm); }
+    .diet-eat { background: var(--success-light); border: 1px solid rgba(56,161,105,0.2); }
+    .diet-avoid { background: var(--danger-light); border: 1px solid rgba(229,62,62,0.2); }
+    .ai-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .loading-overlay {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 40px;
+    }
+    .ai-wave {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .ai-wave span {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--primary);
+      animation: wave 1.4s infinite;
+    }
+    .ai-wave span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-wave span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes wave {
+      0%,60%,100% { transform: translateY(0); }
+      30%          { transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>🤖 AI Prescription Scanner</h1>
+      <p>Upload a prescription image – AI reads, explains, and creates diet plans</p>
+    </div>
+    <div class="page-header-actions">
+      <select class="filter-select" id="outputLang">
+        <option value="en">English</option>
+        <option value="hi">हिंदी</option>
+        <option value="te">తెలుగు</option>
+        <option value="ta">தமிழ்</option>
+        <option value="kn">ಕನ್ನಡ</option>
+      </select>
+      <button class="btn btn-primary" onclick="openModal('symptomModal')">
+        🩺 Symptom Checker
+      </button>
+    </div>
+  </div>
+
+  <div class="ai-layout">
+
+    <!-- Upload Side -->
+    <div>
+      <div class="card mb-3" style="margin-bottom:24px">
+        <div class="card-title mb-3">📷 Upload Prescription</div>
+
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" accept="image/*,application/pdf" id="prescriptionFile" onchange="previewFile(this)">
+          <div id="uploadContent">
+            <div class="upload-icon">🏥</div>
+            <div style="font-size:17px;font-weight:700;color:var(--dark);margin-bottom:8px">
+              Drop prescription here or click to upload
+            </div>
+            <div class="text-sm text-muted">Supports JPG, PNG, PDF. Works with handwritten prescriptions.</div>
+          </div>
+          <img id="previewImg" class="preview-img" alt="Prescription preview">
+        </div>
+
+        <div id="uploadActions" style="display:none;margin-top:16px">
+          <div class="alert alert-info">
+            📎 Prescription ready for analysis
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost flex-1" onclick="clearUpload()">✕ Clear</button>
+            <button class="btn btn-primary flex-1" onclick="scanPrescription()">
+              🤖 Analyse Prescription
+            </button>
+          </div>
+        </div>
+
+        <!-- Patient selection -->
+        <div class="form-group mt-3" style="margin-top:16px">
+          <label class="form-label">Attach to Patient (Optional)</label>
+          <select class="form-control" id="aiPatientSelect">
+            <option value="">Select patient to save results</option>
+            <option value="P001">P001 – Ramesh Kumar</option>
+            <option value="P002">P002 – Priya Nair</option>
+            <option value="P003">P003 – Suresh Reddy</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="card">
+        <div class="card-title mb-3">⚡ How It Works</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-time">Step 1</div>
+            <div class="timeline-content"><strong>Upload Image</strong> – Photo of prescription (even handwritten)</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:var(--accent)"></div>
+            <div class="timeline-time">Step 2</div>
+            <div class="timeline-content"><strong>OCR Extraction</strong> – Google Vision reads all text including handwriting</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:var(--purple)"></div>
+            <div class="timeline-time">Step 3</div>
+            <div class="timeline-content"><strong>AI Analysis</strong> – Claude AI understands medical context, extracts medicines</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:var(--warning)"></div>
+            <div class="timeline-time">Step 4</div>
+            <div class="timeline-content"><strong>Diet Plan</strong> – Personalized diet based on medicines and diagnosis</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:var(--success)"></div>
+            <div class="timeline-time">Step 5</div>
+            <div class="timeline-content"><strong>Your Language</strong> – Results delivered in selected regional language</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Side -->
+    <div>
+      <!-- Loading state -->
+      <div class="card loading-overlay" id="aiLoading">
+        <div class="ai-wave">
+          <span></span><span></span><span></span>
+        </div>
+        <div style="font-size:16px;font-weight:600;color:var(--dark)">AI is analysing your prescription...</div>
+        <div class="text-sm text-muted">Extracting medicines, checking interactions, building diet plan</div>
+      </div>
+
+      <!-- Results -->
+      <div id="aiResults" style="display:none">
+
+        <div class="result-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <span style="font-size:24px">✅</span>
+            <div>
+              <div style="font-weight:700;font-size:16px;color:var(--success)">Prescription Analysed Successfully</div>
+              <div class="text-xs text-muted" id="aiTimestamp"></div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:var(--grey-600)" id="aiDiagnosis"></div>
+        </div>
+
+        <!-- Medicines -->
+        <div class="card mb-3" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title">💊 Medicines Extracted</div>
+            <span class="badge badge-blue" id="medCount">0 medicines</span>
+          </div>
+          <div id="medicinesList"></div>
+        </div>
+
+        <!-- Drug Interactions -->
+        <div class="card mb-3" id="warningsCard" style="display:none;margin-bottom:16px">
+          <div class="card-title mb-2">⚠️ Drug Interaction Warnings</div>
+          <div id="warningsList"></div>
+        </div>
+
+        <!-- Diet Plan -->
+        <div class="card mb-3" style="margin-bottom:16px">
+          <div class="card-title mb-2">🥗 AI Diet Plan</div>
+          <div class="diet-grid">
+            <div class="diet-section diet-eat">
+              <div style="font-weight:700;color:var(--success);margin-bottom:10px">✅ Eat These</div>
+              <ul id="dietEat" style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--grey-600)"></ul>
+            </div>
+            <div class="diet-section diet-avoid">
+              <div style="font-weight:700;color:var(--danger);margin-bottom:10px">❌ Avoid These</div>
+              <ul id="dietAvoid" style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--grey-600)"></ul>
+            </div>
+          </div>
+          <div style="margin-top:16px;padding:12px;background:var(--grey-50);border-radius:8px;font-size:13px;color:var(--grey-600)" id="dietNotes"></div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="alert alert-warning">
+          ⚠️ This is AI-generated analysis for reference only. Always follow your doctor's instructions. This does not replace professional medical advice.
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline flex-1" onclick="printResults()">🖨️ Print</button>
+          <button class="btn btn-primary flex-1" onclick="saveResults()">💾 Save to Patient</button>
+        </div>
+
+      </div>
+
+      <!-- Empty state -->
+      <div class="card" id="aiEmpty">
+        <div class="empty-state">
+          <div class="empty-icon">🤖</div>
+          <h3>Ready to Analyse</h3>
+          <p>Upload a prescription image on the left<br>and click "Analyse Prescription"</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Symptom Checker Modal -->
+<div class="modal-overlay" id="symptomModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🩺 Symptom Checker</span>
+      <button class="modal-close" onclick="closeModal('symptomModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Describe Symptoms</label>
+        <textarea class="form-control" id="symptomsInput" rows="4"
+          placeholder="e.g. fever for 3 days, headache, body ache, mild cough..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Patient Age</label>
+        <input type="number" class="form-control" id="symAge" placeholder="Age in years">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duration</label>
+        <select class="form-control" id="symDuration">
+          <option>Less than 1 day</option>
+          <option>1-3 days</option>
+          <option>3-7 days</option>
+          <option>More than 1 week</option>
+        </select>
+      </div>
+      <div id="symptomResult" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('symptomModal')">Close</button>
+      <button class="btn btn-primary" onclick="checkSymptoms()">🤖 Analyse Symptoms</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/prescription-ai.js"></script>
+<script>injectLayout('prescription');</script>
+</body>
+</html>

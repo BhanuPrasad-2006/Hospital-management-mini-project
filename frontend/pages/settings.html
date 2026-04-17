@@ -1,0 +1,790 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .settings-nav {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 8px;
+      position: sticky;
+      top: calc(var(--topbar-h) + 28px);
+    }
+    .settings-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--grey-600);
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .settings-nav-item:hover { background: var(--grey-50); color: var(--dark); }
+    .settings-nav-item.active { background: var(--primary-light); color: var(--primary); }
+    .settings-nav-item .nav-icon { font-size: 18px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .avatar-upload {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      background: var(--grey-50);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+    .session-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--grey-100);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+    .session-icon { font-size: 28px; }
+    .theme-options { display: flex; gap: 12px; }
+    .theme-card {
+      flex: 1;
+      border: 2px solid var(--grey-200);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition);
+    }
+    .theme-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .theme-card .theme-preview {
+      width: 100%;
+      height: 60px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      overflow: hidden;
+    }
+    .lang-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .lang-card {
+      border: 2px solid var(--grey-200);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition);
+    }
+    .lang-card:hover { border-color: var(--primary); }
+    .lang-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .lang-flag { font-size: 24px; margin-bottom: 4px; }
+    .lang-name { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .lang-native { font-size: 11px; color: var(--grey-400); }
+  </style>
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+<div class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>⚙️ Settings</h1>
+      <p>Manage your profile, preferences, and system configuration</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-ghost btn-sm" onclick="resetAllSettings()">Reset to Default</button>
+      <button class="btn btn-primary" onclick="saveAllSettings()">Save All Changes</button>
+    </div>
+  </div>
+
+  <div class="settings-layout">
+
+    <!-- Settings Nav -->
+    <nav class="settings-nav">
+      <a class="settings-nav-item active" onclick="switchTab('profile',this)">
+        <span class="nav-icon">👤</span> Profile
+      </a>
+      <a class="settings-nav-item" onclick="switchTab('security',this)">
+        <span class="nav-icon">🔐</span> Security
+      </a>
+      <a class="settings-nav-item" onclick="switchTab('language',this)">
+        <span class="nav-icon">🌐</span> Language
+      </a>
+      <a class="settings-nav-item" onclick="switchTab('appearance',this)">
+        <span class="nav-icon">🎨</span> Appearance
+      </a>
+      <a class="settings-nav-item" onclick="switchTab('notifications',this)">
+        <span class="nav-icon">🔔</span> Notifications
+      </a>
+      <a class="settings-nav-item" onclick="switchTab('hospital',this)">
+        <span class="nav-icon">🏥</span> Hospital
+      </a>
+      <a class="settings-nav-item" onclick="switchTab('sessions',this)">
+        <span class="nav-icon">📱</span> Sessions
+      </a>
+      <a class="settings-nav-item" onclick="switchTab('privacy',this)">
+        <span class="nav-icon">🛡️</span> Privacy
+      </a>
+    </nav>
+
+    <!-- Settings Content -->
+    <div>
+
+      <!-- Profile -->
+      <div class="tab-content active" id="tab-profile">
+        <div class="card">
+          <div class="card-title mb-3">Profile Information</div>
+          <div class="avatar-upload">
+            <div class="avatar avatar-xl" id="profileAvatar">A</div>
+            <div>
+              <button class="btn btn-outline btn-sm mb-1" onclick="document.getElementById('avatarInput').click()">
+                📷 Change Photo
+              </button>
+              <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="previewAvatar(this)">
+              <div class="text-xs text-muted">JPG, PNG. Max 2MB.</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Full Name <span>*</span></label>
+              <input type="text" class="form-control" id="settName" value="Dr. Admin User" placeholder="Your full name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address <span>*</span></label>
+              <input type="email" class="form-control" id="settEmail" value="admin@arogyaseva.in">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="form-control" id="settPhone" value="9876543210">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <input type="text" class="form-control" value="Administrator" disabled
+                style="background:var(--grey-50);color:var(--grey-400)">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Designation</label>
+              <input type="text" class="form-control" id="settDesig" placeholder="e.g. Chief Medical Officer">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Department</label>
+              <select class="form-control" id="settDept">
+                <option>Administration</option>
+                <option>Cardiology</option>
+                <option>Neurology</option>
+                <option>Orthopedics</option>
+                <option>Pediatrics</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bio / Notes</label>
+            <textarea class="form-control" id="settBio" rows="3" placeholder="Brief professional bio"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+        </div>
+      </div>
+
+      <!-- Security -->
+      <div class="tab-content" id="tab-security">
+        <div class="card mb-3">
+          <div class="settings-section">
+            <div class="settings-section-title">🔑 Change Password</div>
+            <div class="settings-section-desc">Use a strong password with letters, numbers, and symbols</div>
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <input type="password" class="form-control" id="oldPass" placeholder="Enter current password">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" class="form-control" id="newPass" placeholder="Min 8 characters">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" class="form-control" id="confPass" placeholder="Repeat new password">
+              </div>
+            </div>
+            <div style="background:var(--grey-50);padding:12px 16px;border-radius:8px;margin-bottom:16px">
+              <div style="font-size:12px;font-weight:600;color:var(--grey-600);margin-bottom:6px">Password Strength</div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar green" style="width:60%" id="passStrength"></div>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">🛡️ Two-Factor Authentication</div>
+            <div class="settings-section-desc">Add an extra layer of security to your account</div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Enable 2FA via OTP</strong>
+                <span>Receive OTP on registered mobile number</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="toggle2fa" onchange="toggle2FA(this)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Biometric Login</strong>
+                <span>Use fingerprint or face ID for login</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="toggleBio" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">🔍 Login Security</div>
+            <div class="settings-section-desc">Recent login information</div>
+            <div style="background:var(--grey-50);padding:14px;border-radius:8px;font-size:13px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="color:var(--grey-400)">Last Login</span>
+                <span style="font-weight:600">Today, 09:14 AM</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="color:var(--grey-400)">Login IP</span>
+                <span style="font-weight:600;font-family:var(--font-mono)">192.168.1.10</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--grey-400)">Device</span>
+                <span style="font-weight:600">Chrome on Windows</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div class="tab-content" id="tab-language">
+        <div class="card">
+          <div class="settings-section">
+            <div class="settings-section-title">🌐 Select Interface Language</div>
+            <div class="settings-section-desc">All UI text will switch to your selected language</div>
+            <div class="lang-options">
+              <div class="lang-card selected" onclick="selectLang('en',this)">
+                <div class="lang-flag">🇬🇧</div>
+                <div class="lang-name">English</div>
+                <div class="lang-native">English</div>
+              </div>
+              <div class="lang-card" onclick="selectLang('hi',this)">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Hindi</div>
+                <div class="lang-native">हिंदी</div>
+              </div>
+              <div class="lang-card" onclick="selectLang('te',this)">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Telugu</div>
+                <div class="lang-native">తెలుగు</div>
+              </div>
+              <div class="lang-card" onclick="selectLang('ta',this)">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Tamil</div>
+                <div class="lang-native">தமிழ்</div>
+              </div>
+              <div class="lang-card" onclick="selectLang('kn',this)">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Kannada</div>
+                <div class="lang-native">ಕನ್ನಡ</div>
+              </div>
+              <div class="lang-card" onclick="selectLang('ml',this)">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Malayalam</div>
+                <div class="lang-native">മലയാളം</div>
+              </div>
+              <div class="lang-card" onclick="selectLang('bn',this)">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Bengali</div>
+                <div class="lang-native">বাংলা</div>
+              </div>
+              <div class="lang-card" onclick="selectLang('mr',this)">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Marathi</div>
+                <div class="lang-native">मराठी</div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-section-title">🎤 Voice Assistant Language</div>
+            <div class="settings-section-desc">Language for voice commands and AI responses</div>
+            <select class="form-control" id="voiceLang" style="max-width:300px">
+              <option value="en-IN">English (India)</option>
+              <option value="hi-IN">Hindi</option>
+              <option value="te-IN">Telugu</option>
+              <option value="ta-IN">Tamil</option>
+              <option value="kn-IN">Kannada</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="saveLanguage()">Apply Language</button>
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="tab-content" id="tab-appearance">
+        <div class="card">
+          <div class="settings-section">
+            <div class="settings-section-title">🌙 Theme</div>
+            <div class="settings-section-desc">Choose your preferred colour scheme</div>
+            <div class="theme-options">
+              <div class="theme-card selected" id="themeLight" onclick="setTheme('light',this)">
+                <div class="theme-preview" style="background:#F7FAFC">
+                  <div style="width:30%;background:#0D1B2A;height:100%"></div>
+                  <div style="flex:1;padding:6px">
+                    <div style="background:#E2E8F0;height:8px;border-radius:4px;margin-bottom:4px"></div>
+                    <div style="background:#EDF2F7;height:8px;border-radius:4px;width:70%"></div>
+                  </div>
+                </div>
+                <div style="font-weight:600;font-size:13px;color:var(--dark)">☀️ Light</div>
+              </div>
+              <div class="theme-card" id="themeDark" onclick="setTheme('dark',this)">
+                <div class="theme-preview" style="background:#1A202C">
+                  <div style="width:30%;background:#080F1A;height:100%"></div>
+                  <div style="flex:1;padding:6px">
+                    <div style="background:#2D3748;height:8px;border-radius:4px;margin-bottom:4px"></div>
+                    <div style="background:#2D3748;height:8px;border-radius:4px;width:70%"></div>
+                  </div>
+                </div>
+                <div style="font-weight:600;font-size:13px;color:var(--dark)">🌙 Dark</div>
+              </div>
+              <div class="theme-card" id="themeSystem" onclick="setTheme('system',this)">
+                <div class="theme-preview" style="background:linear-gradient(to right,#F7FAFC 50%,#1A202C 50%)">
+                  <div style="width:30%;background:linear-gradient(to bottom,#0D1B2A 50%,#080F1A 50%);height:100%"></div>
+                </div>
+                <div style="font-weight:600;font-size:13px;color:var(--dark)">💻 System</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">🎨 Accent Color</div>
+            <div class="settings-section-desc">Choose the primary color of the interface</div>
+            <div class="color-options">
+              <div class="color-option selected" style="background:#0A6EBD" onclick="setAccent('#0A6EBD',this)" title="Blue"></div>
+              <div class="color-option" style="background:#00C9A7" onclick="setAccent('#00C9A7',this)" title="Teal"></div>
+              <div class="color-option" style="background:#805AD5" onclick="setAccent('#805AD5',this)" title="Purple"></div>
+              <div class="color-option" style="background:#38A169" onclick="setAccent('#38A169',this)" title="Green"></div>
+              <div class="color-option" style="background:#DD6B20" onclick="setAccent('#DD6B20',this)" title="Orange"></div>
+              <div class="color-option" style="background:#E53E3E" onclick="setAccent('#E53E3E',this)" title="Red"></div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">📐 Font Size</div>
+            <div class="settings-section-desc">Adjust text size across the application</div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-ghost btn-sm" onclick="setFontSize('small')">Small</button>
+              <button class="btn btn-primary btn-sm" id="fontMed">Medium</button>
+              <button class="btn btn-ghost btn-sm" onclick="setFontSize('large')">Large</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">📌 Sidebar</div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Collapsed Sidebar by Default</strong>
+                <span>Start with compact sidebar on load</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="sidebarDefault">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="saveAppearance()">Save Appearance</button>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="tab-content" id="tab-notifications">
+        <div class="card">
+          <div class="settings-section">
+            <div class="settings-section-title">🔔 Notification Preferences</div>
+            <div class="settings-section-desc">Choose what alerts you want to receive</div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Appointment Reminders</strong>
+                <span>Get notified before upcoming appointments</span>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Medicine Reminders</strong>
+                <span>Prescription-based medication alerts</span>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Emergency Alerts</strong>
+                <span>Critical patient and SOS notifications</span>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Low Stock Alerts</strong>
+                <span>Pharmacy inventory below reorder level</span>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>WhatsApp Notifications</strong>
+                <span>Send updates via WhatsApp to patients</span>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Email Notifications</strong>
+                <span>Reports and summaries via email</span>
+              </div>
+              <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Browser Notifications</strong>
+                <span>Desktop push notifications</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="browserNotif" onchange="requestNotifPermission(this)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <strong>Security Alerts</strong>
+                <span>Suspicious login and threat detection</span>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-section-title">⏰ Reminder Timing</div>
+            <div class="settings-section-desc">How early to send appointment reminders</div>
+            <select class="form-control" style="max-width:250px">
+              <option>15 minutes before</option>
+              <option selected>30 minutes before</option>
+              <option>1 hour before</option>
+              <option>2 hours before</option>
+              <option>1 day before</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="saveNotifications()">Save Preferences</button>
+        </div>
+      </div>
+
+      <!-- Hospital -->
+      <div class="tab-content" id="tab-hospital">
+        <div class="card">
+          <div class="settings-section">
+            <div class="settings-section-title">🏥 Hospital Information</div>
+            <div class="settings-section-desc">Basic hospital details shown on bills and reports</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Hospital Name <span>*</span></label>
+                <input type="text" class="form-control" value="ArogyaSeva Medical Centre">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Registration Number</label>
+                <input type="text" class="form-control" placeholder="Govt registration number">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              <textarea class="form-control" rows="2">123, Health Street, Bengaluru, Karnataka - 560001</textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-control" value="080-12345678">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" value="info@arogyaseva.in">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Emergency Contact</label>
+                <input type="tel" class="form-control" placeholder="24/7 emergency number">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Working Hours</label>
+                <input type="text" class="form-control" placeholder="e.g. 8:00 AM – 10:00 PM">
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-section-title">🏢 Departments</div>
+            <div class="settings-section-desc">Active departments in your hospital</div>
+            <div id="deptList" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+              <span class="badge badge-blue">Cardiology ✕</span>
+              <span class="badge badge-blue">Neurology ✕</span>
+              <span class="badge badge-blue">Orthopedics ✕</span>
+              <span class="badge badge-blue">Pediatrics ✕</span>
+              <span class="badge badge-blue">ICU ✕</span>
+              <span class="badge badge-blue">Emergency ✕</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input type="text" class="form-control" id="newDept" placeholder="Add department name" style="max-width:250px">
+              <button class="btn btn-outline btn-sm" onclick="addDept()">Add</button>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveHospital()">Save Hospital Settings</button>
+        </div>
+      </div>
+
+      <!-- Sessions -->
+      <div class="tab-content" id="tab-sessions">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📱 Active Sessions</div>
+            <button class="btn btn-danger btn-sm" onclick="logoutAll()">Logout All Devices</button>
+          </div>
+          <div id="sessionsList">
+            <div class="session-item">
+              <div class="session-icon">💻</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:14px;color:var(--dark)">Chrome on Windows
+                  <span class="badge badge-green" style="margin-left:8px">Current</span>
+                </div>
+                <div class="text-xs text-muted">IP: 192.168.1.10 • Bengaluru, Karnataka</div>
+                <div class="text-xs text-muted">Last active: Just now</div>
+              </div>
+            </div>
+            <div class="session-item">
+              <div class="session-icon">📱</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:14px;color:var(--dark)">Chrome on Android</div>
+                <div class="text-xs text-muted">IP: 103.45.67.89 • Mysuru, Karnataka</div>
+                <div class="text-xs text-muted">Last active: 2 hours ago</div>
+              </div>
+              <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger)"
+                onclick="killSession('s2')">Revoke</button>
+            </div>
+            <div class="session-item">
+              <div class="session-icon">🖥️</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:14px;color:var(--dark)">Firefox on Mac</div>
+                <div class="text-xs text-muted">IP: 49.206.12.34 • Chennai, Tamil Nadu</div>
+                <div class="text-xs text-muted">Last active: Yesterday, 4:30 PM</div>
+              </div>
+              <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger)"
+                onclick="killSession('s3')">Revoke</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy -->
+      <div class="tab-content" id="tab-privacy">
+        <div class="card">
+          <div class="settings-section">
+            <div class="settings-section-title">🛡️ Data & Privacy</div>
+            <div class="settings-section-desc">Manage your data rights under DPDP Act and GDPR</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <button class="btn btn-outline" onclick="downloadMyData()">
+                📥 Download My Data
+              </button>
+              <button class="btn btn-outline" onclick="viewAuditLogs()">
+                📋 View My Audit Logs
+              </button>
+              <button class="btn btn-outline" onclick="manageConsent()">
+                📝 Manage Data Consent
+              </button>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-section-title">🗑️ Delete Account</div>
+            <div class="settings-section-desc">
+              This will soft-delete your account. Medical records are retained for legal compliance.
+            </div>
+            <div class="alert alert-danger">
+              ⚠️ This action cannot be undone. All your personal preferences will be lost.
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="deleteAccount()">Request Account Deletion</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  injectLayout('settings');
+
+  function switchTab(tab, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function saveProfile() {
+    const name = document.getElementById('settName').value;
+    localStorage.setItem('user_name', name);
+    document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('userInitial').textContent  = name.charAt(0).toUpperCase();
+    document.getElementById('userName').textContent     = name;
+    showToast('✅ Profile saved successfully!', 'success');
+  }
+
+  function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const av = document.getElementById('profileAvatar');
+        av.style.backgroundImage = `url(${e.target.result})`;
+        av.style.backgroundSize = 'cover';
+        av.textContent = '';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function changePassword() {
+    const old = document.getElementById('oldPass').value;
+    const n   = document.getElementById('newPass').value;
+    const c   = document.getElementById('confPass').value;
+    if (!old || !n || !c) { showToast('All fields required', 'warning'); return; }
+    if (n !== c) { showToast('Passwords do not match', 'error'); return; }
+    if (n.length < 8) { showToast('Min 8 characters required', 'warning'); return; }
+    showToast('✅ Password changed successfully!', 'success');
+  }
+
+  function toggle2FA(cb) {
+    showToast(cb.checked ? '2FA enabled ✅' : '2FA disabled', cb.checked ? 'success' : 'warning');
+  }
+
+  function selectLang(code, el) {
+    document.querySelectorAll('.lang-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    localStorage.setItem('language', code);
+  }
+
+  function saveLanguage() {
+    showToast('✅ Language preference saved!', 'success');
+  }
+
+  function setTheme(theme, el) {
+    document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const t = theme === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : theme;
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    showToast(`Theme set to ${theme}`, 'info');
+  }
+
+  function setAccent(color, el) {
+    document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.documentElement.style.setProperty('--primary', color);
+    localStorage.setItem('accent', color);
+  }
+
+  function setFontSize(size) {
+    const sizes = { small: '14px', medium: '16px', large: '18px' };
+    document.documentElement.style.fontSize = sizes[size];
+    showToast(`Font size set to ${size}`, 'info');
+  }
+
+  function saveAppearance() { showToast('✅ Appearance settings saved!', 'success'); }
+  function saveNotifications() { showToast('✅ Notification preferences saved!', 'success'); }
+  function saveHospital() { showToast('✅ Hospital settings saved!', 'success'); }
+  function saveAllSettings() { showToast('✅ All settings saved!', 'success'); }
+  function resetAllSettings() {
+    confirmAction('Reset all settings to defaults?', () => {
+      localStorage.removeItem('theme');
+      localStorage.removeItem('accent');
+      showToast('Settings reset to defaults', 'info');
+    });
+  }
+
+  function requestNotifPermission(cb) {
+    if (cb.checked && 'Notification' in window) {
+      Notification.requestPermission().then(p => {
+        if (p !== 'granted') { cb.checked = false; showToast('Notification permission denied', 'warning'); }
+        else showToast('Browser notifications enabled ✅', 'success');
+      });
+    }
+  }
+
+  function logoutAll() {
+    confirmAction('Logout from ALL devices?', () => {
+      showToast('All sessions terminated', 'success');
+    });
+  }
+
+  function killSession(id) {
+    showToast(`Session ${id} revoked`, 'success');
+  }
+
+  function downloadMyData() { showToast('Preparing data export... You will receive an email shortly', 'info'); }
+  function viewAuditLogs()  { location.href = 'security.html'; }
+  function manageConsent()  { showToast('Consent management – connect to backend', 'info'); }
+  function deleteAccount()  {
+    confirmAction('Request account deletion? This cannot be undone.', () => {
+      showToast('Deletion request submitted. You will be contacted within 48 hours.', 'warning');
+    });
+  }
+
+  function addDept() {
+    const val = document.getElementById('newDept').value.trim();
+    if (!val) return;
+    const list = document.getElementById('deptList');
+    list.insertAdjacentHTML('beforeend', `<span class="badge badge-blue">${val} ✕</span>`);
+    document.getElementById('newDept').value = '';
+  }
+
+  // Update password strength meter
+  document.getElementById('newPass')?.addEventListener('input', function() {
+    const strength = this.value.length > 12 ? 90 :
+                     this.value.length > 8  ? 60 :
+                     this.value.length > 4  ? 30 : 10;
+    const bar = document.getElementById('passStrength');
+    if (bar) bar.style.width = strength + '%';
+    const color = strength > 60 ? 'green' : strength > 30 ? 'orange' : 'red';
+    if (bar) bar.className = `progress-bar ${color}`;
+  });
+</script>
+</body>
+</html>

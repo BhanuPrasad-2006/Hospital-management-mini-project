@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patients – ArogyaSeva HMS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+  <div class="main-content">
+
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1>Patients</h1>
+        <p>Manage patient records and medical history</p>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn btn-ghost btn-sm">📥 Import</button>
+        <button class="btn btn-primary" onclick="openModal('addPatientModal')">
+          + Register Patient
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card mb-3">
+      <div class="filter-bar" style="margin-bottom:0">
+        <div class="search-bar flex-1" style="max-width:320px">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="patientSearch" placeholder="Search by name, ID, phone..." oninput="filterPatients()">
+        </div>
+        <select class="filter-select" id="statusFilter" onchange="filterPatients()">
+          <option value="">All Status</option>
+          <option value="Admitted">Admitted</option>
+          <option value="OPD">OPD</option>
+          <option value="Discharged">Discharged</option>
+          <option value="Critical">Critical</option>
+        </select>
+        <select class="filter-select" id="bloodFilter" onchange="filterPatients()">
+          <option value="">All Blood Groups</option>
+          <option>A+</option><option>A-</option>
+          <option>B+</option><option>B-</option>
+          <option>O+</option><option>O-</option>
+          <option>AB+</option><option>AB-</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="resetFilters()">Reset</button>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <span style="font-size:13px;color:var(--grey-400);align-self:center">
+            Showing <strong id="patientCount">5</strong> patients
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patients Table -->
+    <div class="card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>ID / ABHA</th>
+              <th>Age / Gender</th>
+              <th>Blood</th>
+              <th>Doctor</th>
+              <th>Status</th>
+              <th>Admitted On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="patientsTbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal-overlay" id="addPatientModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">+ Register New Patient</span>
+      <button class="modal-close" onclick="closeModal('addPatientModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name <span>*</span></label>
+          <input type="text" class="form-control" id="pName" placeholder="Patient full name">
+          <small id="pNameErr" style="color:var(--danger);font-size:12px"></small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ABHA ID</label>
+          <input type="text" class="form-control" id="pAbha" placeholder="14-digit ABHA number">
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Date of Birth <span>*</span></label>
+          <input type="date" class="form-control" id="pDob">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender <span>*</span></label>
+          <select class="form-control" id="pGender">
+            <option value="">Select</option>
+            <option>Male</option><option>Female</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Blood Group <span>*</span></label>
+          <select class="form-control" id="pBlood">
+            <option value="">Select</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option>
+            <option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone Number <span>*</span></label>
+          <input type="tel" class="form-control" id="pPhone" placeholder="10-digit mobile number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emergency Contact</label>
+          <input type="tel" class="form-control" id="pEmergency" placeholder="Emergency contact number">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Assigned Doctor</label>
+          <select class="form-control" id="pDoctor">
+            <option value="">Select Doctor</option>
+            <option>Dr. Anil Sharma – Cardiology</option>
+            <option>Dr. Sunita Mehta – Neurology</option>
+            <option>Dr. Rajesh Patel – Orthopedic</option>
+            <option>Dr. Meena Iyer – Pediatrics</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Visit Type</label>
+          <select class="form-control" id="pVisitType">
+            <option>OPD</option>
+            <option>Emergency</option>
+            <option>Planned Admission</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <textarea class="form-control" id="pAddress" rows="2" placeholder="Patient address"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Known Allergies</label>
+          <input type="text" class="form-control" id="pAllergies" placeholder="e.g. Penicillin, Aspirin">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred Language</label>
+          <select class="form-control" id="pLang">
+            <option value="en">English</option>
+            <option value="hi">हिंदी</option>
+            <option value="te">తెలుగు</option>
+            <option value="ta">தமிழ்</option>
+            <option value="kn">ಕನ್ನಡ</option>
+            <option value="ml">മലയാളം</option>
+            <option value="bn">বাংলা</option>
+            <option value="mr">मराठी</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addPatientModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="registerPatient()">Register Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Patient Modal -->
+<div class="modal-overlay" id="viewPatientModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="viewPatientTitle">Patient Profile</span>
+      <button class="modal-close" onclick="closeModal('viewPatientModal')">✕</button>
+    </div>
+    <div class="modal-body" id="viewPatientBody">
+      <!-- filled by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('viewPatientModal')">Close</button>
+      <button class="btn btn-outline" onclick="location.href='prescription.html'">🤖 AI Prescription</button>
+      <button class="btn btn-primary" onclick="location.href='billing.html'">💰 Generate Bill</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/patients.js"></script>
+<script>
+  injectLayout('patients');
+  loadPatients();
+</script>
+</body>
+</html>
