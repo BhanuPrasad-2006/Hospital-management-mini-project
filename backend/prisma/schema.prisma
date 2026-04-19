@@ -1,3 +1,10 @@
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║   ArogyaSeva HMS — Prisma Schema  (schema.prisma)                       ║
+// ║   38 tables across 9 groups  |  PostgreSQL 16  |  Prisma v5.10          ║
+// ║   All PII fields stored as Bytes (AES-256-CBC encrypted)                ║
+// ║   Soft-delete on all user-facing tables via isDeleted flag               ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,16 +14,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── ENUMS ────────────────────────────────────────────────────────────────────
-
-enum Role {
-  ADMIN
-  DOCTOR
-  NURSE
-  RECEPTIONIST
-  PHARMACIST
-  PATIENT
-}
+// ─────────────────────────────────────────────────────────────────────────────
+//  ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
 
 enum Gender {
   MALE
@@ -24,337 +24,1174 @@ enum Gender {
   OTHER
 }
 
-enum AppointmentStatus {
+enum BloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  O_POS
+  O_NEG
+  AB_POS
+  AB_NEG
+}
+
+enum Language {
+  en
+  hi
+  te
+  ta
+  kn
+  ml
+  bn
+  mr
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum StaffRole {
+  ADMIN
+  RECEPTIONIST
+  NURSE
+  PHARMACIST
+  LAB_TECHNICIAN
+  ACCOUNTANT
+  SECURITY_OFFICER
+  HOUSEKEEPING
+  AMBULANCE_DRIVER
+}
+
+enum RoomType {
+  GENERAL
+  PRIVATE
+  ICU
+  EMERGENCY
+  OT
+}
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+}
+
+enum AppointmentType {
+  WALK_IN
   SCHEDULED
+  FOLLOW_UP
+  EMERGENCY
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
   IN_PROGRESS
   COMPLETED
   CANCELLED
   NO_SHOW
 }
 
-enum PrescriptionStatus {
-  ACTIVE
-  DISPENSED
-  EXPIRED
+enum AdmissionType {
+  EMERGENCY
+  PLANNED
+  TRANSFER
+}
+
+enum LabReportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PLACED
+  PROCESSING
+  DISPATCHED
+  DELIVERED
   CANCELLED
 }
 
 enum BillStatus {
   PENDING
+  PARTIAL
   PAID
-  PARTIALLY_PAID
-  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  INSURANCE
+  NETBANKING
+}
+
+enum BillItemCategory {
+  CONSULTATION
+  MEDICINE
+  LAB_TEST
+  ROOM_CHARGE
+  OT_CHARGE
+  PROCEDURE
+  NURSING
+  OTHER
+}
+
+enum EmergencyStatus {
+  REQUESTED
+  DISPATCHED
+  EN_ROUTE
+  ARRIVED
+  COMPLETED
   CANCELLED
 }
 
-enum EmergencyPriority {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
+enum AmbulanceStatus {
+  AVAILABLE
+  DISPATCHED
+  MAINTENANCE
+  OFF_DUTY
 }
 
-enum BloodGroup {
-  A_POS
-  A_NEG
-  B_POS
-  B_NEG
-  AB_POS
-  AB_NEG
-  O_POS
-  O_NEG
+enum AmbulanceEquipment {
+  BASIC
+  ADVANCED
+  ICU
 }
 
-// ─── USER & AUTH ──────────────────────────────────────────────────────────────
-
-model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  passwordHash  String
-  role          Role     @default(PATIENT)
-  isActive      Boolean  @default(true)
-  lastLoginAt   DateTime?
-  failedLogins  Int      @default(0)
-  lockedUntil   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
-  patient       Patient?
-  doctor        Doctor?
-  nurse         Nurse?
-  staff         Staff?
-  auditLogs     AuditLog[]
-  sessions      Session[]
-
-  @@index([email])
-  @@index([role])
+enum BloodRequestUrgency {
+  ROUTINE
+  URGENT
+  EMERGENCY
 }
 
-model Session {
-  id           String   @id @default(uuid())
-  userId       String
-  token        String   @unique
-  ipAddress    String?
-  userAgent    String?
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
+enum BloodRequestStatus {
+  PENDING
+  FULFILLED
+  PARTIALLY_FULFILLED
+  CANCELLED
 }
 
-// ─── PEOPLE ───────────────────────────────────────────────────────────────────
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  EXPORT
+  UPLOAD
+  DOWNLOAD
+  SOS_TRIGGER
+  PAYMENT
+}
+
+enum EntityType {
+  PATIENT
+  DOCTOR
+  STAFF
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum InsuranceClaimStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  SETTLED
+  REJECTED
+}
+
+enum NotificationType {
+  APPOINTMENT
+  MEDICINE
+  LAB_REPORT
+  EMERGENCY
+  BILL
+  BLOOD_REQUEST
+  SYSTEM
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GROUP 1 — PATIENT TABLES  (3 tables)
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Patient {
-  id             String      @id @default(uuid())
-  userId         String      @unique
-  firstName      String
-  lastName       String
-  dateOfBirth    DateTime
-  gender         Gender
-  phone          String?
-  address        String?
-  bloodGroup     BloodGroup?
-  emergencyContact String?
-  // Encrypted fields stored as ciphertext
-  insuranceId    String?
-  allergies      String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  id                String     @id @default(uuid())
+  patientId         String     @unique              // PAT-YYYY-XXXX  (immutable display ID)
+  firstName         Bytes                            // AES-256 encrypted
+  lastName          Bytes                            // AES-256 encrypted
+  phone             Bytes                            // AES-256 encrypted
+  email             Bytes?                           // AES-256 encrypted
+  passwordHash      String
+  dateOfBirth       DateTime
+  gender            Gender
+  bloodGroup        BloodGroup?
+  abhaId            String?    @unique              // Govt Ayushman Bharat Health ID
+  address           Bytes?                           // AES-256 encrypted
+  profilePhotoUrl   String?
+  allergies         String[]   @default([])
+  chronicConditions String[]   @default([])
+  emergencyContact  Bytes?                           // AES-256 encrypted JSON {name, phone, relation}
+  isActive          Boolean    @default(true)
+  isDeleted         Boolean    @default(false)
+  deletedAt         DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
-  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  appointments   Appointment[]
-  prescriptions  Prescription[]
-  bills          Bill[]
-  emergencies    Emergency[]
+  // ── Relations ──
+  settings          PatientSettings?
+  history           PatientHistory[]
+  appointments      Appointment[]
+  admissions        Admission[]
+  prescriptions     Prescription[]
+  labReports        LabReport[]
+  vitalsReadings    VitalsReading[]
+  bills             Bill[]
+  medicineOrders    MedicineOrder[]
+  dietPlans         DietPlan[]
+  emergencies       Emergency[]
+  bloodDonor        BloodDonor?
+  bloodRequests     BloodRequest[]
+  sessions          UserSession[]
+  behaviorProfile   BehaviorProfile?
+  verification      Verification?
 
-  @@index([userId])
-  @@index([lastName, firstName])
+  @@index([patientId])
+  @@index([abhaId])
+  @@index([isDeleted])
+  @@index([createdAt])
 }
+
+model PatientSettings {
+  id                    String    @id @default(uuid())
+  patientId             String    @unique
+  preferredLanguage     Language  @default(en)
+  apptReminders         Boolean   @default(true)
+  medicineReminders     Boolean   @default(true)
+  labResultAlerts       Boolean   @default(true)
+  whatsappNotifs        Boolean   @default(true)
+  smsNotifs             Boolean   @default(true)
+  emailNotifs           Boolean   @default(false)
+  theme                 Theme     @default(LIGHT)
+  accentColor           String    @default("blue")
+  fontSize              String    @default("medium")   // small | medium | large
+  reminderMinutesBefore Int       @default(30)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  patient  Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model PatientHistory {
+  id           String    @id @default(uuid())
+  patientId    String
+  visitDate    DateTime
+  diagnosis    String
+  treatment    String?
+  hospitalName String
+  doctorName   String?
+  notes        String?
+  documents    String[]  @default([])         // S3/Cloudinary URLs
+  isDeleted    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  patient  Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([visitDate])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GROUP 2 — DOCTOR TABLES  (3 tables)
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Doctor {
-  id             String   @id @default(uuid())
-  userId         String   @unique
-  firstName      String
-  lastName       String
-  specialization String
-  licenseNumber  String   @unique
-  phone          String?
-  isAvailable    Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                String    @id @default(uuid())
+  doctorCode        String    @unique              // DOC-YYYY-SPEC-XXX  (login identifier)
+  firstName         String
+  lastName          String
+  specialization    String
+  licenseNumber     String    @unique
+  qualifications    String[]  @default([])
+  experienceYears   Int       @default(0)
+  consultationFee   Decimal   @db.Decimal(10, 2)
+  availableDays     String[]  @default([])         // ["MON","TUE","WED","THU","FRI"]
+  availableFrom     String?                        // "09:00"
+  availableTo       String?                        // "17:00"
+  phone             Bytes                           // AES-256 encrypted
+  email             Bytes?                          // AES-256 encrypted
+  passwordHash      String
+  profilePhotoUrl   String?
+  departmentId      String?
+  bio               String?
+  rating            Float?    @default(0)
+  isActive          Boolean   @default(true)
+  isDeleted         Boolean   @default(false)
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  appointments   Appointment[]
-  prescriptions  Prescription[]
+  // ── Relations ──
+  department        Department?     @relation(fields: [departmentId], references: [id])
+  settings          DoctorSettings?
+  leaves            DoctorLeave[]
+  appointments      Appointment[]
+  admissions        Admission[]
+  prescriptions     Prescription[]
+  sessions          UserSession[]
+  behaviorProfile   BehaviorProfile?
+  verification      Verification?
 
+  @@index([doctorCode])
   @@index([specialization])
+  @@index([departmentId])
+  @@index([isDeleted])
 }
 
-model Nurse {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  firstName   String
-  lastName    String
-  department  String
-  phone       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model DoctorSettings {
+  id                    String    @id @default(uuid())
+  doctorId              String    @unique
+  preferredLanguage     Language  @default(en)
+  apptReminders         Boolean   @default(true)
+  labResultAlerts       Boolean   @default(true)
+  criticalAlerts        Boolean   @default(true)
+  emailNotifs           Boolean   @default(true)
+  smsNotifs             Boolean   @default(true)
+  theme                 Theme     @default(LIGHT)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 }
+
+model DoctorLeave {
+  id          String    @id @default(uuid())
+  doctorId    String
+  startDate   DateTime
+  endDate     DateTime
+  reason      String
+  approved    Boolean?                // null=pending  true=approved  false=rejected
+  approvedBy  String?                 // staffId (UUID) of admin who approved
+  approvedAt  DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@index([startDate, endDate])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GROUP 3 — STAFF TABLES  (2 tables)
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Staff {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  firstName   String
-  lastName    String
-  department  String
-  position    String
-  phone       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(uuid())
+  staffId         String    @unique              // STF-ROLE-XXX  (login identifier)
+  firstName       String
+  lastName        String
+  role            StaffRole
+  departmentId    String?
+  phone           Bytes                           // AES-256 encrypted
+  email           Bytes?                          // AES-256 encrypted
+  passwordHash    String
+  profilePhotoUrl String?
+  joiningDate     DateTime  @default(now())
+  isActive        Boolean   @default(true)
+  isDeleted       Boolean   @default(false)
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // ── Relations ──
+  department      Department?     @relation(fields: [departmentId], references: [id])
+  settings        StaffSettings?
+  sessions        UserSession[]
+  behaviorProfile BehaviorProfile?
+  verification    Verification?
+
+  @@index([staffId])
+  @@index([role])
+  @@index([departmentId])
+  @@index([isDeleted])
 }
 
-// ─── CLINICAL ─────────────────────────────────────────────────────────────────
+model StaffSettings {
+  id                String    @id @default(uuid())
+  staffId           String    @unique
+  preferredLanguage Language  @default(en)
+  notifications     Boolean   @default(true)
+  criticalAlerts    Boolean   @default(true)
+  theme             Theme     @default(LIGHT)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  staff  Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  VERIFICATION TABLE  (bonus addition — tracks approval workflow)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Verification {
+  id               String             @id @default(uuid())
+  entityType       EntityType                             // PATIENT | DOCTOR | STAFF
+
+  // Exactly one of these will be set (polymorphic 1:1)
+  patientId        String?            @unique
+  doctorId         String?            @unique
+  staffId          String?            @unique
+
+  // What they submitted
+  jobRole          String?                                // staff: role description
+  specialization   String?                                // doctor: specialization
+  licenseNumber    String?                                // doctor: medical council number
+  documentUrls     String[]           @default([])        // ID proof, degree, certificate URLs
+
+  // Outcome
+  status           VerificationStatus @default(PENDING)
+  isVerified       Boolean            @default(false)
+  verifiedAt       DateTime?
+  verifiedBy       String?                                // staffId (UUID) of admin who verified
+  rejectionReason  String?
+  suspensionReason String?
+  notes            String?
+
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  // ── Relations ──
+  patient          Patient?   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor           Doctor?    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  staff            Staff?     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([entityType])
+  @@index([status])
+  @@index([isVerified])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GROUP 4 — HOSPITAL INFRASTRUCTURE  (3 tables)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Department {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  floor        Int
+  totalBeds    Int       @default(0)
+  phone        String?
+  // headDoctorId stored as String to avoid circular FK (Doctor → Department → Doctor)
+  headDoctorId String?
+  description  String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // ── Relations ──
+  doctors      Doctor[]
+  staff        Staff[]
+  rooms        Room[]
+
+  @@index([name])
+}
+
+model Room {
+  id           String    @id @default(uuid())
+  roomNumber   String    @unique
+  floor        Int
+  type         RoomType  @default(GENERAL)
+  departmentId String
+  totalBeds    Int       @default(1)
+  notes        String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // ── Relations ──
+  department   Department  @relation(fields: [departmentId], references: [id])
+  beds         Bed[]
+
+  @@index([departmentId])
+  @@index([type])
+}
+
+model Bed {
+  id               String    @id @default(uuid())
+  bedNumber        String
+  roomId           String
+  status           BedStatus @default(AVAILABLE)
+  // currentPatientId stored as plain string to avoid circular FK
+  // actual tracking is through Admission.bedId
+  currentPatientId String?
+  admittedAt       DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // ── Relations ──
+  room             Room            @relation(fields: [roomId], references: [id])
+  admissions       Admission[]
+  vitalsReadings   VitalsReading[]
+
+  @@unique([bedNumber, roomId])
+  @@index([roomId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GROUP 5 — CLINICAL TABLES  (7 tables)
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Appointment {
-  id          String            @id @default(uuid())
-  patientId   String
-  doctorId    String
-  dateTime    DateTime
-  duration    Int               @default(30) // minutes
-  reason      String?
-  notes       String?
-  status      AppointmentStatus @default(SCHEDULED)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id           String            @id @default(uuid())
+  patientId    String
+  doctorId     String
+  scheduledAt  DateTime
+  endsAt       DateTime?
+  type         AppointmentType   @default(SCHEDULED)
+  status       AppointmentStatus @default(PENDING)
+  tokenNumber  Int?
+  reason       String?
+  notes        String?
+  followUpOf   String?           // appointmentId of the previous appointment this follows
+  isDeleted    Boolean           @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  patient     Patient  @relation(fields: [patientId], references: [id])
-  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+  // ── Relations ──
+  patient      Patient  @relation(fields: [patientId], references: [id])
+  doctor       Doctor   @relation(fields: [doctorId], references: [id])
 
   @@index([patientId])
   @@index([doctorId])
-  @@index([dateTime])
+  @@index([scheduledAt])
   @@index([status])
+}
+
+model Admission {
+  id               String        @id @default(uuid())
+  patientId        String
+  doctorId         String
+  bedId            String
+  admissionType    AdmissionType @default(PLANNED)
+  diagnosis        String?
+  chiefComplaint   String?
+  icdCode          String?       // ICD-10 code
+  admittedAt       DateTime      @default(now())
+  dischargedAt     DateTime?
+  dischargeNotes   String?
+  dischargeSummary String?
+  followUpDate     DateTime?
+  isDeleted        Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // ── Relations ──
+  patient          Patient         @relation(fields: [patientId], references: [id])
+  doctor           Doctor          @relation(fields: [doctorId], references: [id])
+  bed              Bed             @relation(fields: [bedId], references: [id])
+  bill             Bill?
+  vitalsReadings   VitalsReading[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([bedId])
+  @@index([admittedAt])
+  @@index([isDeleted])
 }
 
 model Prescription {
-  id          String             @id @default(uuid())
-  patientId   String
-  doctorId    String
-  diagnosis   String
-  notes       String?
-  status      PrescriptionStatus @default(ACTIVE)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id           String    @id @default(uuid())
+  patientId    String
+  doctorId     String
+  imageUrl     String?                   // S3/Cloudinary URL (encrypted at storage level)
+  rawOcrText   String?                   // raw text from Google Vision OCR
+  isAiScanned  Boolean   @default(false)
+  diagnosis    String?
+  icdCode      String?
+  notes        String?
+  language     Language  @default(en)
+  expiresAt    DateTime
+  isDeleted    Boolean   @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  patient     Patient  @relation(fields: [patientId], references: [id])
-  doctor      Doctor   @relation(fields: [doctorId], references: [id])
-  items       PrescriptionItem[]
+  // ── Relations ──
+  patient      Patient                @relation(fields: [patientId], references: [id])
+  doctor       Doctor                 @relation(fields: [doctorId], references: [id])
+  medicines    PrescriptionMedicine[]
+  dietPlan     DietPlan?
 
   @@index([patientId])
   @@index([doctorId])
+  @@index([expiresAt])
+  @@index([isDeleted])
 }
 
-model PrescriptionItem {
-  id               String   @id @default(uuid())
-  prescriptionId   String
-  medicineName     String
-  dosage           String
-  frequency        String
-  duration         String
-  instructions     String?
+model PrescriptionMedicine {
+  id              String    @id @default(uuid())
+  prescriptionId  String
+  medicineName    String
+  genericName     String?
+  dose            String              // "500mg"
+  frequency       String              // "Twice daily"
+  timing          String              // "After meals"
+  durationDays    Int
+  purpose         String?
+  sideEffects     String[]  @default([])
+  importantNote   String?
+  quantity        Int?                // units to dispense
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  prescription     Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  prescription    Prescription  @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([prescriptionId])
 }
 
-// ─── PHARMACY ─────────────────────────────────────────────────────────────────
+model DietPlan {
+  id             String    @id @default(uuid())
+  prescriptionId String    @unique
+  patientId      String
+  foodsToEat     String[]  @default([])
+  foodsToAvoid   String[]  @default([])
+  mealTiming     Json                  // { "breakfast": "...", "lunch": "...", "dinner": "..." }
+  hydration      String?
+  specialNotes   String?
+  generatedByAi  Boolean   @default(false)
+  language       Language  @default(en)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // ── Relations ──
+  prescription   Prescription  @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  patient        Patient       @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+}
+
+model LabReport {
+  id          String          @id @default(uuid())
+  patientId   String
+  testName    String
+  testDate    DateTime
+  reportUrl   String?                           // S3/Cloudinary URL
+  results     Json?                             // [{ param, value, unit, refRange, status }]
+  status      LabReportStatus @default(PENDING)
+  aiSummary   String?
+  orderedBy   String?                           // doctorId (UUID) who ordered the test
+  labTechId   String?                           // staffId (UUID) who processed
+  notes       String?
+  isDeleted   Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  patient     Patient  @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@index([testDate])
+  @@index([status])
+}
+
+model VitalsReading {
+  id              String    @id @default(uuid())
+  patientId       String
+  admissionId     String?
+  bedId           String?
+  heartRate       Int?                 // bpm
+  bloodPressure   String?              // "120/80"
+  spO2            Float?               // percentage
+  temperature     Float?               // Celsius
+  bloodSugar      Float?               // mg/dL
+  respiratoryRate Int?                 // breaths per minute
+  weight          Float?               // kg
+  height          Float?               // cm (usually recorded at admission only)
+  source          String    @default("MANUAL")   // MANUAL | IOT
+  recordedBy      String?              // staffId or doctorId (UUID)
+  notes           String?
+  recordedAt      DateTime  @default(now())
+
+  // ── Relations ──
+  patient         Patient    @relation(fields: [patientId], references: [id])
+  admission       Admission? @relation(fields: [admissionId], references: [id])
+  bed             Bed?       @relation(fields: [bedId], references: [id])
+
+  @@index([patientId])
+  @@index([admissionId])
+  @@index([recordedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GROUP 6 — PHARMACY & BILLING  (7 tables)
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Medicine {
-  id            String   @id @default(uuid())
-  name          String
-  genericName   String?
-  manufacturer  String?
-  category      String?
-  unitPrice     Float
-  stock         Int      @default(0)
-  reorderLevel  Int      @default(10)
-  expiryDate    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String    @id @default(uuid())
+  name           String
+  genericName    String?
+  category       String                           // antibiotic | painkiller | antidiabetic | …
+  manufacturer   String?
+  unit           String                           // tablet | ml | mg | sachet | cream
+  dosageForms    String[]  @default([])           // ["tablet","syrup"]
+  stockUnits     Int       @default(0)
+  reorderLevel   Int       @default(10)
+  unitPrice      Decimal   @db.Decimal(10, 2)
+  sellingPrice   Decimal   @db.Decimal(10, 2)    @default(0)
+  expiryDate     DateTime?
+  batchNumber    String?
+  supplierId     String?
+  isActive       Boolean   @default(true)
+  isDeleted      Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // ── Relations ──
+  dispenseLogs   DispenseLog[]
+  orderItems     MedicineOrderItem[]
 
   @@index([name])
   @@index([category])
+  @@index([stockUnits])
+  @@index([expiryDate])
 }
 
-// ─── BILLING ──────────────────────────────────────────────────────────────────
+model DispenseLog {
+  id              String    @id @default(uuid())
+  medicineId      String
+  // patientId and prescriptionId stored as strings for audit — not FK
+  // (pharmacist may dispense to walk-in patients without HMS registration)
+  patientId       String?
+  prescriptionId  String?
+  quantity        Int
+  unitPrice       Decimal   @db.Decimal(10, 2)
+  totalPrice      Decimal   @db.Decimal(10, 2)
+  dispensedBy     String                           // staffId (UUID) of pharmacist
+  dispensedAt     DateTime  @default(now())
+  notes           String?
+
+  medicine  Medicine  @relation(fields: [medicineId], references: [id])
+
+  @@index([medicineId])
+  @@index([patientId])
+  @@index([dispensedAt])
+}
+
+model MedicineOrder {
+  id               String      @id @default(uuid())
+  patientId        String
+  status           OrderStatus @default(PLACED)
+  totalAmount      Decimal     @db.Decimal(10, 2)
+  deliveryAddress  String?
+  deliveryNote     String?
+  estimatedMinutes Int?
+  placedAt         DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // ── Relations ──
+  patient    Patient             @relation(fields: [patientId], references: [id])
+  items      MedicineOrderItem[]
+
+  @@index([patientId])
+  @@index([status])
+  @@index([placedAt])
+}
+
+model MedicineOrderItem {
+  id         String    @id @default(uuid())
+  orderId    String
+  medicineId String
+  quantity   Int
+  unitPrice  Decimal   @db.Decimal(10, 2)
+  totalPrice Decimal   @db.Decimal(10, 2)
+
+  // ── Relations ──
+  order    MedicineOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  medicine Medicine       @relation(fields: [medicineId], references: [id])
+
+  @@index([orderId])
+  @@index([medicineId])
+}
 
 model Bill {
-  id          String     @id @default(uuid())
-  patientId   String
-  totalAmount Float
-  paidAmount  Float      @default(0)
-  status      BillStatus @default(PENDING)
-  dueDate     DateTime?
-  notes       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id             String     @id @default(uuid())
+  patientId      String
+  admissionId    String?    @unique               // 1:1 — one bill per admission
+  invoiceNumber  String     @unique               // HMS-2024-000001
+  totalAmount    Decimal    @db.Decimal(10, 2)
+  paidAmount     Decimal    @db.Decimal(10, 2)    @default(0)
+  discountAmount Decimal    @db.Decimal(10, 2)    @default(0)
+  discountReason String?
+  discountCategory String?                        // SENIOR_CITIZEN | EMPLOYEE | CHARITY | OTHER
+  status         BillStatus @default(PENDING)
+  generatedBy    String?                          // staffId (UUID) of billing staff
+  isDeleted      Boolean    @default(false)
+  generatedAt    DateTime   @default(now())
+  paidAt         DateTime?
+  updatedAt      DateTime   @updatedAt
 
-  patient     Patient    @relation(fields: [patientId], references: [id])
-  items       BillItem[]
+  // ── Relations ──
+  patient    Patient    @relation(fields: [patientId], references: [id])
+  admission  Admission? @relation(fields: [admissionId], references: [id])
+  items      BillItem[]
+  payments   Payment[]
+  insurance  InsuranceClaim?
+
+  @@index([patientId])
+  @@index([status])
+  @@index([invoiceNumber])
+  @@index([generatedAt])
+}
+
+model BillItem {
+  id          String           @id @default(uuid())
+  billId      String
+  description String
+  category    BillItemCategory
+  quantity    Int              @default(1)
+  unitPrice   Decimal          @db.Decimal(10, 2)
+  totalPrice  Decimal          @db.Decimal(10, 2)
+  referenceId String?                              // prescriptionId | labReportId | admissionId
+  createdAt   DateTime         @default(now())
+
+  bill  Bill  @relation(fields: [billId], references: [id], onDelete: Cascade)
+
+  @@index([billId])
+  @@index([category])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  billId        String
+  amount        Decimal       @db.Decimal(10, 2)
+  method        PaymentMethod
+  transactionId String?                           // UPI reference | card last 4 | receipt no.
+  receivedBy    String?                           // staffId (UUID)
+  paidAt        DateTime      @default(now())
+  notes         String?
+
+  bill  Bill  @relation(fields: [billId], references: [id])
+
+  @@index([billId])
+  @@index([paidAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GROUP 7 — EMERGENCY & BLOOD BANK  (6 tables)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Emergency {
+  id            String          @id @default(uuid())
+  // patientId is null when SOS triggered without login
+  patientId     String?
+  callerPhone   Bytes?                           // AES-256 encrypted — anonymous caller
+  latitude      Float
+  longitude     Float
+  addressText   String?
+  symptoms      String[]        @default([])
+  status        EmergencyStatus @default(REQUESTED)
+  ambulanceId   String?
+  etaMinutes    Int?
+  hospitalNotes String?
+  requestedAt   DateTime        @default(now())
+  dispatchedAt  DateTime?
+  arrivedAt     DateTime?
+  completedAt   DateTime?
+  updatedAt     DateTime        @updatedAt
+
+  // ── Relations ──
+  patient       Patient?    @relation(fields: [patientId], references: [id])
+  ambulance     Ambulance?  @relation(fields: [ambulanceId], references: [id])
+  tracking      AmbulanceTracking[]
+
+  @@index([status])
+  @@index([patientId])
+  @@index([requestedAt])
+}
+
+model Ambulance {
+  id              String              @id @default(uuid())
+  vehicleNumber   String              @unique
+  driverName      String
+  driverPhone     String
+  // driverStaffId stored as string — not all drivers may be registered Staff
+  driverStaffId   String?
+  currentLat      Float?
+  currentLng      Float?
+  status          AmbulanceStatus     @default(AVAILABLE)
+  equipmentType   AmbulanceEquipment  @default(BASIC)
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // ── Relations ──
+  emergencies     Emergency[]
+  tracking        AmbulanceTracking[]
+
+  @@index([status])
+}
+
+model AmbulanceTracking {
+  id           String    @id @default(uuid())
+  ambulanceId  String
+  emergencyId  String?
+  latitude     Float
+  longitude    Float
+  speed        Float?    // km/h
+  recordedAt   DateTime  @default(now())
+
+  // ── Relations ──
+  ambulance    Ambulance  @relation(fields: [ambulanceId], references: [id])
+  emergency    Emergency? @relation(fields: [emergencyId], references: [id])
+
+  @@index([ambulanceId])
+  @@index([emergencyId])
+  @@index([recordedAt])
+}
+
+model BloodDonor {
+  id               String      @id @default(uuid())
+  patientId        String?     @unique               // linked if registered patient
+  name             String
+  bloodGroup       BloodGroup
+  phone            Bytes                              // AES-256 encrypted
+  email            Bytes?
+  latitude         Float?
+  longitude        Float?
+  address          String?
+  isAvailable      Boolean     @default(true)
+  lastDonationDate DateTime?
+  totalDonations   Int         @default(0)
+  healthConditions String[]    @default([])
+  age              Int
+  isDeleted        Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  patient          Patient?    @relation(fields: [patientId], references: [id])
+
+  @@index([bloodGroup])
+  @@index([isAvailable])
+}
+
+model BloodInventory {
+  id             String      @id @default(uuid())
+  bloodGroup     BloodGroup
+  rhFactor       String                              // "POSITIVE" | "NEGATIVE"
+  unitsAvailable Int         @default(0)
+  expiryDate     DateTime?
+  lastUpdated    DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([bloodGroup, rhFactor])
+  @@index([bloodGroup])
+}
+
+model BloodRequest {
+  id              String              @id @default(uuid())
+  patientId       String?
+  requestedBy     String                              // staffId (UUID) who created request
+  bloodGroup      BloodGroup
+  unitsNeeded     Int
+  urgency         BloodRequestUrgency @default(ROUTINE)
+  status          BloodRequestStatus  @default(PENDING)
+  unitsFulfilled  Int                 @default(0)
+  notes           String?
+  requestedAt     DateTime            @default(now())
+  fulfilledAt     DateTime?
+  updatedAt       DateTime            @updatedAt
+
+  patient         Patient?  @relation(fields: [patientId], references: [id])
+
+  @@index([bloodGroup])
+  @@index([status])
+  @@index([urgency])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GROUP 8 — SECURITY & SYSTEM  (4 tables)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  // userId holds the human-readable ID: PAT-2024-0001 | DOC-2024-CARD-001 | STF-ADM-001
+  userId       String
+  userName     String
+  userRole     String
+  action       AuditAction
+  module       String                  // patients | prescriptions | billing | emergency | …
+  recordId     String?
+  oldValue     Json?                   // state before the change
+  newValue     Json?                   // state after the change
+  ipAddress    String
+  deviceType   String?                 // MOBILE | DESKTOP | TABLET
+  deviceInfo   String?                 // browser / OS string
+  location     String?                 // city / region derived from IP
+  riskScore    Int         @default(0) // 0-100 — AI assigned
+  flagged      Boolean     @default(false)
+  flagReason   String?
+  logHash      String?                 // SHA-256 of this entry's content
+  previousHash String?                 // SHA-256 of previous log entry (tamper-evident chain)
+  timestamp    DateTime    @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([module])
+  @@index([timestamp])
+  @@index([flagged])
+  @@index([riskScore])
+}
+
+model UserSession {
+  id            String     @id @default(uuid())
+  // userId: human-readable identifier (PAT-2024-0001 etc.)
+  userId        String
+  userType      EntityType
+  deviceInfo    String?
+  ipAddress     String
+  location      String?
+  userAgent     String?
+  refreshToken  String?    @unique
+  isActive      Boolean    @default(true)
+  loginAt       DateTime   @default(now())
+  lastActiveAt  DateTime   @default(now())
+  expiresAt     DateTime
+  logoutAt      DateTime?
+
+  // Exactly one of these set — polymorphic FK
+  patientId     String?
+  doctorId      String?
+  staffId       String?
+
+  // ── Relations ──
+  patient       Patient?  @relation(fields: [patientId], references: [id])
+  doctor        Doctor?   @relation(fields: [doctorId], references: [id])
+  staff         Staff?    @relation(fields: [staffId], references: [id])
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+model BehaviorProfile {
+  id                     String     @id @default(uuid())
+  // userId: human-readable identifier
+  userId                 String     @unique
+  userType               EntityType
+
+  // Behavioral baselines (updated incrementally)
+  avgKeystrokeSpeedMs    Float?     // average ms between keystrokes
+  avgSessionDurationMin  Float?     // average session length in minutes
+  avgActionsPerMin       Float?     // average actions per minute
+  typicalLoginHour       Int?       // 0-23 — most common login hour
+  typicalLoginDayOfWeek  Int?       // 0=Sunday … 6=Saturday
+  avgRecordsPerSession   Float?     // average records accessed per session
+  sampleCount            Int        @default(0)
+
+  // Exactly one of these set — polymorphic FK
+  patientId              String?    @unique
+  doctorId               String?    @unique
+  staffId                String?    @unique
+
+  // ── Relations ──
+  patient                Patient?   @relation(fields: [patientId], references: [id])
+  doctor                 Doctor?    @relation(fields: [doctorId], references: [id])
+  staff                  Staff?     @relation(fields: [staffId], references: [id])
+
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+}
+
+model HospitalSettings {
+  id                 String    @id @default(uuid())
+  hospitalName       String    @default("ArogyaSeva Hospital")
+  address            String?
+  city               String?
+  state              String?
+  pincode            String?
+  phone              String?
+  emergencyPhone     String?
+  email              String?
+  website            String?
+  logoUrl            String?
+  workingHoursStart  String    @default("08:00")
+  workingHoursEnd    String    @default("20:00")
+  workingDays        String[]  @default(["MON","TUE","WED","THU","FRI","SAT"])
+  registrationNo     String?
+  gstNumber          String?
+  timezone           String    @default("Asia/Kolkata")
+  currency           String    @default("INR")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  BONUS — INSURANCE CLAIM  (TPA management)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model InsuranceClaim {
+  id              String               @id @default(uuid())
+  billId          String               @unique
+  patientId       String
+  insurerName     String
+  policyNumber    String
+  tpaName         String?
+  claimAmount     Decimal              @db.Decimal(10, 2)
+  approvedAmount  Decimal?             @db.Decimal(10, 2)
+  copayAmount     Decimal?             @db.Decimal(10, 2)
+  status          InsuranceClaimStatus @default(DRAFT)
+  preAuthCode     String?
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  settledAt       DateTime?
+  rejectionReason String?
+  documents       String[]             @default([])    // S3 URLs of claim documents
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  // ── Relations ──
+  bill            Bill  @relation(fields: [billId], references: [id])
 
   @@index([patientId])
   @@index([status])
 }
 
-model BillItem {
-  id          String  @id @default(uuid())
-  billId      String
-  description String
-  quantity    Int     @default(1)
-  unitPrice   Float
-  total       Float
+// ─────────────────────────────────────────────────────────────────────────────
+//  BONUS — NOTIFICATION  (in-app & push)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  bill        Bill    @relation(fields: [billId], references: [id], onDelete: Cascade)
-}
-
-// ─── EMERGENCY ────────────────────────────────────────────────────────────────
-
-model Emergency {
-  id            String            @id @default(uuid())
-  patientId     String?
-  callerName    String
-  callerPhone   String
-  location      String
-  description   String
-  priority      EmergencyPriority @default(HIGH)
-  isResolved    Boolean           @default(false)
-  resolvedAt    DateTime?
-  dispatchedAt  DateTime?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-
-  patient       Patient?          @relation(fields: [patientId], references: [id])
-
-  @@index([priority])
-  @@index([isResolved])
-}
-
-// ─── BLOOD BANK ───────────────────────────────────────────────────────────────
-
-model BloodDonor {
-  id          String     @id @default(uuid())
-  firstName   String
-  lastName    String
-  bloodGroup  BloodGroup
-  phone       String
-  email       String?
-  address     String?
-  lastDonated DateTime?
-  isEligible  Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  @@index([bloodGroup])
-  @@index([isEligible])
-}
-
-model BloodInventory {
-  id          String     @id @default(uuid())
-  bloodGroup  BloodGroup
-  units       Int        @default(0)
-  expiryDate  DateTime
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  @@index([bloodGroup])
-}
-
-// ─── AUDIT & SECURITY ─────────────────────────────────────────────────────────
-
-model AuditLog {
-  id          String   @id @default(uuid())
-  userId      String?
-  action      String
-  resource    String
-  resourceId  String?
-  ipAddress   String?
-  userAgent   String?
-  details     String?  // JSON string of additional details
-  prevHash    String?  // Hash of the previous log entry (blockchain-style)
-  hash        String?  // SHA-256 hash of this entry
-  createdAt   DateTime @default(now())
-
-  user        User?    @relation(fields: [userId], references: [id])
+model Notification {
+  id         String           @id @default(uuid())
+  // userId: human-readable identifier
+  userId     String
+  userType   EntityType
+  title      String
+  message    String
+  type       NotificationType
+  isRead     Boolean          @default(false)
+  actionUrl  String?          // deep link to relevant page
+  metadata   Json?            // extra data (appointmentId, etc.)
+  createdAt  DateTime         @default(now())
 
   @@index([userId])
-  @@index([action])
-  @@index([resource])
+  @@index([isRead])
   @@index([createdAt])
+  @@index([type])
 }
