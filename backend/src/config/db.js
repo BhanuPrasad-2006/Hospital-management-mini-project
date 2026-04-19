@@ -1,16 +1,27 @@
-const { PrismaClient } = require("@prisma/client");
+// backend/src/config/db.js
+// Prisma Client singleton — prevents multiple instances in development hot-reload
 
-// Singleton pattern — prevents multiple PrismaClient instances during hot-reload
-const globalForPrisma = globalThis;
+const { PrismaClient } = require('@prisma/client')
+
+const globalForPrisma = globalThis
 
 const prisma =
-  globalForPrisma.prisma ||
+  globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query", "warn", "error"] : ["error"],
-  });
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'error', 'warn']
+        : ['error'],
+    errorFormat: 'minimal',
+  })
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma
 }
 
-module.exports = prisma;
+// Graceful shutdown
+process.on('beforeExit', async () => {
+  await prisma.$disconnect()
+})
+
+module.exports = prisma
