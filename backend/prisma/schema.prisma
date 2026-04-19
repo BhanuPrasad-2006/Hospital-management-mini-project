@@ -7,13 +7,354 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Add your models below
-// Example:
-// model Patient {
-//   id        Int      @id @default(autoincrement())
-//   name      String
-//   email     String   @unique
-//   phone     String?
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  DOCTOR
+  NURSE
+  RECEPTIONIST
+  PHARMACIST
+  PATIENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PrescriptionStatus {
+  ACTIVE
+  DISPENSED
+  EXPIRED
+  CANCELLED
+}
+
+enum BillStatus {
+  PENDING
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum EmergencyPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum BloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+// ─── USER & AUTH ──────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  role          Role     @default(PATIENT)
+  isActive      Boolean  @default(true)
+  lastLoginAt   DateTime?
+  failedLogins  Int      @default(0)
+  lockedUntil   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  patient       Patient?
+  doctor        Doctor?
+  nurse         Nurse?
+  staff         Staff?
+  auditLogs     AuditLog[]
+  sessions      Session[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  token        String   @unique
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+// ─── PEOPLE ───────────────────────────────────────────────────────────────────
+
+model Patient {
+  id             String      @id @default(uuid())
+  userId         String      @unique
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime
+  gender         Gender
+  phone          String?
+  address        String?
+  bloodGroup     BloodGroup?
+  emergencyContact String?
+  // Encrypted fields stored as ciphertext
+  insuranceId    String?
+  allergies      String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+  bills          Bill[]
+  emergencies    Emergency[]
+
+  @@index([userId])
+  @@index([lastName, firstName])
+}
+
+model Doctor {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  firstName      String
+  lastName       String
+  specialization String
+  licenseNumber  String   @unique
+  phone          String?
+  isAvailable    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+
+  @@index([specialization])
+}
+
+model Nurse {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  firstName   String
+  lastName    String
+  department  String
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Staff {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  firstName   String
+  lastName    String
+  department  String
+  position    String
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── CLINICAL ─────────────────────────────────────────────────────────────────
+
+model Appointment {
+  id          String            @id @default(uuid())
+  patientId   String
+  doctorId    String
+  dateTime    DateTime
+  duration    Int               @default(30) // minutes
+  reason      String?
+  notes       String?
+  status      AppointmentStatus @default(SCHEDULED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([dateTime])
+  @@index([status])
+}
+
+model Prescription {
+  id          String             @id @default(uuid())
+  patientId   String
+  doctorId    String
+  diagnosis   String
+  notes       String?
+  status      PrescriptionStatus @default(ACTIVE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+  items       PrescriptionItem[]
+
+  @@index([patientId])
+  @@index([doctorId])
+}
+
+model PrescriptionItem {
+  id               String   @id @default(uuid())
+  prescriptionId   String
+  medicineName     String
+  dosage           String
+  frequency        String
+  duration         String
+  instructions     String?
+
+  prescription     Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+}
+
+// ─── PHARMACY ─────────────────────────────────────────────────────────────────
+
+model Medicine {
+  id            String   @id @default(uuid())
+  name          String
+  genericName   String?
+  manufacturer  String?
+  category      String?
+  unitPrice     Float
+  stock         Int      @default(0)
+  reorderLevel  Int      @default(10)
+  expiryDate    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([name])
+  @@index([category])
+}
+
+// ─── BILLING ──────────────────────────────────────────────────────────────────
+
+model Bill {
+  id          String     @id @default(uuid())
+  patientId   String
+  totalAmount Float
+  paidAmount  Float      @default(0)
+  status      BillStatus @default(PENDING)
+  dueDate     DateTime?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  patient     Patient    @relation(fields: [patientId], references: [id])
+  items       BillItem[]
+
+  @@index([patientId])
+  @@index([status])
+}
+
+model BillItem {
+  id          String  @id @default(uuid())
+  billId      String
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Float
+  total       Float
+
+  bill        Bill    @relation(fields: [billId], references: [id], onDelete: Cascade)
+}
+
+// ─── EMERGENCY ────────────────────────────────────────────────────────────────
+
+model Emergency {
+  id            String            @id @default(uuid())
+  patientId     String?
+  callerName    String
+  callerPhone   String
+  location      String
+  description   String
+  priority      EmergencyPriority @default(HIGH)
+  isResolved    Boolean           @default(false)
+  resolvedAt    DateTime?
+  dispatchedAt  DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  patient       Patient?          @relation(fields: [patientId], references: [id])
+
+  @@index([priority])
+  @@index([isResolved])
+}
+
+// ─── BLOOD BANK ───────────────────────────────────────────────────────────────
+
+model BloodDonor {
+  id          String     @id @default(uuid())
+  firstName   String
+  lastName    String
+  bloodGroup  BloodGroup
+  phone       String
+  email       String?
+  address     String?
+  lastDonated DateTime?
+  isEligible  Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([bloodGroup])
+  @@index([isEligible])
+}
+
+model BloodInventory {
+  id          String     @id @default(uuid())
+  bloodGroup  BloodGroup
+  units       Int        @default(0)
+  expiryDate  DateTime
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([bloodGroup])
+}
+
+// ─── AUDIT & SECURITY ─────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  resource    String
+  resourceId  String?
+  ipAddress   String?
+  userAgent   String?
+  details     String?  // JSON string of additional details
+  prevHash    String?  // Hash of the previous log entry (blockchain-style)
+  hash        String?  // SHA-256 hash of this entry
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+}

@@ -1,0 +1,3 @@
+// Billing pages — Invoices, Payments, Reports
+// TODO: Implement billing pages
+export default {};

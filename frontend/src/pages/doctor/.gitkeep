@@ -1,0 +1,3 @@
+// Doctor pages — Clinical dashboard, Prescriptions
+// TODO: Implement doctor-facing pages
+export default {};

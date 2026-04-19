@@ -1,0 +1,3 @@
+// Patient pages — Dashboard, Appointments, Medicines
+// TODO: Implement patient-facing pages
+export default {};

@@ -1,0 +1,3 @@
+// Nurse pages — Vitals, Tasks, Medication admin
+// TODO: Implement nurse pages
+export default {};
