@@ -1,105 +1,147 @@
 /**
- * Secure File Upload Middleware
+ * ╔══════════════════════════════════════════════════════════════════╗
+ * ║  ArogyaSeva HMS — File Upload Middleware (PRD §8.4)             ║
+ * ║  multer memoryStorage → pipe directly to S3 (no disk write)     ║
+ * ╚══════════════════════════════════════════════════════════════════╝
  *
- * Configures multer with strict file type validation and size limits.
- * Prevents malicious file uploads (e.g. executables disguised as images).
+ * Security controls:
+ *   - MIME type whitelist (jpeg/png/webp/pdf only)
+ *   - Extension validation (must match MIME)
+ *   - Path traversal detection (../ ..\)
+ *   - Max size: 10 MB
+ *   - memoryStorage: file never touches disk
  */
+
+"use strict";
 
 const multer = require("multer");
-const path = require("path");
-const crypto = require("crypto");
+const path   = require("path");
 
-// Allowed MIME types and their extensions
-const ALLOWED_TYPES = {
-  "image/jpeg": [".jpg", ".jpeg"],
-  "image/png": [".png"],
-  "image/webp": [".webp"],
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const MAX_SIZE_BYTES = (parseInt(process.env.MAX_FILE_SIZE_MB, 10) || 10) * 1024 * 1024;
+
+const ALLOWED = {
+  "image/jpeg":      [".jpg", ".jpeg"],
+  "image/png":       [".png"],
+  "image/webp":      [".webp"],
   "application/pdf": [".pdf"],
-  "text/csv": [".csv"],
 };
 
-const MAX_FILE_SIZE = (parseInt(process.env.MAX_FILE_SIZE_MB, 10) || 10) * 1024 * 1024;
-const UPLOAD_DIR = process.env.UPLOAD_DIR || "uploads";
+// ─── Path traversal detection ─────────────────────────────────────────────────
 
-/**
- * Storage configuration — renames files with a random UUID to prevent
- * path traversal and filename collisions.
- */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueName = `${crypto.randomUUID()}${ext}`;
-    cb(null, uniqueName);
-  },
-});
+function _hasPathTraversal(filename) {
+  // Detect ../ ..\  and URL-encoded variants %2e%2e
+  return (
+    filename.includes("../") ||
+    filename.includes("..\\") ||
+    /\.\.(\/|\\|%2f|%5c)/i.test(filename) ||
+    /(%2e){2}/i.test(filename)
+  );
+}
 
-/**
- * File filter — validates both MIME type and extension.
- */
-function fileFilter(req, file, cb) {
-  const ext = path.extname(file.originalname).toLowerCase();
-  const allowedExtensions = ALLOWED_TYPES[file.mimetype];
+// ─── Multer fileFilter ────────────────────────────────────────────────────────
 
-  if (!allowedExtensions) {
-    return cb(new Error(`File type "${file.mimetype}" is not allowed.`), false);
+function _fileFilter(req, file, cb) {
+  const originalName = file.originalname || "";
+
+  // 1. Path traversal check
+  if (_hasPathTraversal(originalName)) {
+    return cb(
+      Object.assign(new Error("Filename contains path traversal characters."), { status: 400 })
+    );
   }
 
-  if (!allowedExtensions.includes(ext)) {
+  // 2. MIME type whitelist
+  const allowedExts = ALLOWED[file.mimetype];
+  if (!allowedExts) {
     return cb(
-      new Error(`File extension "${ext}" does not match MIME type "${file.mimetype}".`),
-      false
+      Object.assign(
+        new Error(`File type "${file.mimetype}" is not allowed. Accepted: JPEG, PNG, WebP, PDF.`),
+        { status: 400 }
+      )
+    );
+  }
+
+  // 3. Extension must match declared MIME (prevents mime spoofing)
+  const ext = path.extname(originalName).toLowerCase();
+  if (!allowedExts.includes(ext)) {
+    return cb(
+      Object.assign(
+        new Error(`File extension "${ext}" does not match MIME type "${file.mimetype}".`),
+        { status: 400 }
+      )
     );
   }
 
   cb(null, true);
 }
 
+// ─── Multer instances ─────────────────────────────────────────────────────────
+
+// Memory storage — buffer is available at req.file.buffer for direct S3 streaming
+const _memoryStorage = multer.memoryStorage();
+
 /**
- * Configured multer instance.
+ * Single-file uploader for prescription / lab report images.
+ * Field name: "file"
  */
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: MAX_FILE_SIZE,
-    files: 5, // Max 5 files per request
-  },
+const prescriptionUpload = multer({
+  storage:    _memoryStorage,
+  fileFilter: _fileFilter,
+  limits:     { fileSize: MAX_SIZE_BYTES, files: 1 },
 });
 
 /**
- * Error handler for multer errors — returns friendly messages.
+ * Multi-file uploader for document uploads (up to 5 files).
+ * Field name: "files"
+ */
+const documentUpload = multer({
+  storage:    _memoryStorage,
+  fileFilter: _fileFilter,
+  limits:     { fileSize: MAX_SIZE_BYTES, files: 5 },
+});
+
+// ─── Multer error handler ─────────────────────────────────────────────────────
+
+/**
+ * Express error-handling middleware for multer errors.
+ * Must be placed AFTER the multer middleware in the stack.
  */
 function handleUploadError(err, req, res, next) {
   if (err instanceof multer.MulterError) {
-    if (err.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({
-        success: false,
-        message: `File too large. Maximum size is ${process.env.MAX_FILE_SIZE_MB || 10}MB.`,
-      });
+    switch (err.code) {
+      case "LIMIT_FILE_SIZE":
+        return res.status(400).json({
+          success: false,
+          error:   `File too large. Maximum size is ${process.env.MAX_FILE_SIZE_MB || 10}MB.`,
+          code:    "FILE_TOO_LARGE",
+        });
+      case "LIMIT_FILE_COUNT":
+        return res.status(400).json({
+          success: false,
+          error:   "Too many files. Maximum 5 files per request.",
+          code:    "TOO_MANY_FILES",
+        });
+      default:
+        return res.status(400).json({
+          success: false,
+          error:   `Upload error: ${err.message}`,
+          code:    "UPLOAD_ERROR",
+        });
     }
-    if (err.code === "LIMIT_FILE_COUNT") {
-      return res.status(400).json({
-        success: false,
-        message: "Too many files. Maximum 5 files per upload.",
-      });
-    }
+  }
+
+  // Custom errors from fileFilter (status attached above)
+  if (err?.status === 400) {
     return res.status(400).json({
       success: false,
-      message: `Upload error: ${err.message}`,
+      error:   err.message,
+      code:    "INVALID_FILE",
     });
   }
 
-  if (err) {
-    return res.status(400).json({
-      success: false,
-      message: err.message,
-    });
-  }
-
-  next();
+  next(err);
 }
 
-module.exports = { upload, handleUploadError };
+module.exports = { prescriptionUpload, documentUpload, handleUploadError };

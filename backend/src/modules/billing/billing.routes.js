@@ -1,13 +1,22 @@
-const { Router } = require("express");
-const { createBill, getBills, recordPayment } = require("./billing.controller");
+"use strict";
+
+const { Router }       = require("express");
 const { authenticate } = require("../../middleware/auth");
-const { authorize } = require("../../middleware/rbac");
+const { authorize }    = require("../../middleware/rbac");
+const { sensitiveLimiter } = require("../../middleware/ratelimit");
+const {
+  getPatientCharges, createBill, recordPayment,
+  generateQR, reconciliation,
+} = require("./billing.controller");
 
 const router = Router();
-router.use(authenticate);
 
-router.post("/", authorize("ADMIN", "RECEPTIONIST"), createBill);
-router.get("/", authorize("ADMIN", "RECEPTIONIST", "PATIENT"), getBills);
-router.post("/:id/payment", authorize("ADMIN", "RECEPTIONIST"), recordPayment);
+router.use(authenticate, authorize("ADMIN", "ACCOUNTANT", "RECEPTIONIST"));
+
+router.get("/patient/:patientId",    getPatientCharges);
+router.post("/bills",                createBill);
+router.post("/payments",             recordPayment);
+router.post("/qr",                   sensitiveLimiter, generateQR);
+router.get("/reconciliation",        authorize("ADMIN", "ACCOUNTANT"), reconciliation);
 
 module.exports = router;
